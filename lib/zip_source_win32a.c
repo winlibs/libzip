@@ -1,6 +1,6 @@
 /*
 zip_source_win32a.c -- create data source from Windows file (ANSI)
-Copyright (C) 1999-2016 Dieter Baron and Thomas Klausner
+Copyright (C) 1999-2017 Dieter Baron and Thomas Klausner
 
 This file is part of libzip, a library to manipulate ZIP archives.
 The authors can be contacted at <libzip@nih.at>
@@ -90,7 +90,7 @@ _win32_open_a(_zip_source_win32_read_file_t *ctx)
 static HANDLE
 _win32_create_temp_a(_zip_source_win32_read_file_t *ctx, void **temp, zip_uint32_t value, PSECURITY_ATTRIBUTES sa)
 {
-    int len;
+    size_t len;
 
     len = strlen((const char *)ctx->fname) + 10;
     if (*temp == NULL) {

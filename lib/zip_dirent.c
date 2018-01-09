@@ -1,6 +1,6 @@
 /*
   zip_dirent.c -- read directory entry (local or central), clean dirent
-  Copyright (C) 1999-2016 Dieter Baron and Thomas Klausner
+  Copyright (C) 1999-2017 Dieter Baron and Thomas Klausner
 
   This file is part of libzip, a library to manipulate ZIP archives.
   The authors can be contacted at <libzip@nih.at>
@@ -281,8 +281,8 @@ _zip_dirent_init(zip_dirent_t *de)
     de->cloned = 0;
 
     de->crc_valid = true;
-    de->version_madeby = 20 | (ZIP_OPSYS_DEFAULT << 8);
-    de->version_needed = 20; /* 2.0 */
+    de->version_madeby = 63 | (ZIP_OPSYS_DEFAULT << 8);
+    de->version_needed = 10; /* 1.0 */
     de->bitflags = 0;
     de->comp_method = ZIP_CM_DEFAULT;
     de->last_mod = 0;
@@ -296,6 +296,7 @@ _zip_dirent_init(zip_dirent_t *de)
     de->int_attrib = 0;
     de->ext_attrib = ZIP_EXT_ATTRIB_DEFAULT;
     de->offset = 0;
+    de->compression_level = 0;
     de->encryption_method = ZIP_EM_NONE;
     de->password = NULL;
 }
@@ -578,9 +579,6 @@ _zip_dirent_read(zip_dirent_t *zde, zip_source_t *src, zip_buffer_t *buffer, boo
     }
 
     if (!_zip_dirent_process_winzip_aes(zde, error)) {
-	if (!from_buffer) {
-	    _zip_buffer_free(buffer);
-	}
 	return -1;
     }
 
@@ -797,10 +795,10 @@ _zip_dirent_write(zip_t *za, zip_dirent_t *de, zip_flags_t flags)
     }
 
     if (de->encryption_method == ZIP_EM_NONE) {
-	de->bitflags &= ~ZIP_GPBF_ENCRYPTED;
+	de->bitflags &= (zip_uint16_t)~ZIP_GPBF_ENCRYPTED;
     }
     else {
-	de->bitflags |= ZIP_GPBF_ENCRYPTED;
+	de->bitflags |= (zip_uint16_t)ZIP_GPBF_ENCRYPTED;
     }
 
     is_really_zip64 = _zip_dirent_needs_zip64(de, flags);
@@ -862,7 +860,7 @@ _zip_dirent_write(zip_t *za, zip_dirent_t *de, zip_flags_t flags)
 
 	_zip_buffer_put_16(ef_buffer, 2);
 	_zip_buffer_put(ef_buffer, "AE", 2);
-	_zip_buffer_put_8(ef_buffer, (de->encryption_method & 0xff));
+	_zip_buffer_put_8(ef_buffer, (zip_uint8_t)(de->encryption_method & 0xff));
 	_zip_buffer_put_16(ef_buffer, (zip_uint16_t)de->comp_method);
 
         if (!_zip_buffer_ok(ef_buffer)) {
@@ -890,7 +888,7 @@ _zip_dirent_write(zip_t *za, zip_dirent_t *de, zip_flags_t flags)
         _zip_buffer_put_16(buffer, (zip_uint16_t)(is_really_zip64 ? 45 : de->version_madeby));
     }
     _zip_buffer_put_16(buffer, (zip_uint16_t)(is_really_zip64 ? 45 : de->version_needed));
-    _zip_buffer_put_16(buffer, de->bitflags&0xfff9); /* clear compression method specific flags */
+    _zip_buffer_put_16(buffer, de->bitflags);
     if (is_winzip_aes) {
 	_zip_buffer_put_16(buffer, ZIP_CM_WINZIP_AES);
     }
@@ -1102,4 +1100,40 @@ _zip_u2d_time(time_t intime, zip_uint16_t *dtime, zip_uint16_t *ddate)
     *dtime = (zip_uint16_t)(((tm->tm_hour)<<11) + ((tm->tm_min)<<5) + ((tm->tm_sec)>>1));
 
     return;
+}
+
+
+void
+_zip_dirent_set_version_needed(zip_dirent_t *de, bool force_zip64) {
+    zip_uint16_t length;
+
+    if (de->comp_method == ZIP_CM_LZMA) {
+	de->version_needed = 63;
+	return;
+    }
+
+    if (de->comp_method == ZIP_CM_BZIP2) {
+	de->version_needed = 46;
+	return;
+    }
+
+    if (force_zip64 || _zip_dirent_needs_zip64(de, 0)) {
+	de->version_needed = 45;
+	return;
+    }
+    
+    if (de->comp_method == ZIP_CM_DEFLATE || de->encryption_method == ZIP_EM_TRAD_PKWARE) {
+	de->version_needed = 20;
+	return;
+    }
+
+    /* directory */
+    if ((length = _zip_string_length(de->filename)) > 0) {
+	if (de->filename->raw[length-1] == '/') {
+	    de->version_needed = 20;
+	    return;
+	}
+    }
+    
+    de->version_needed = 10;
 }

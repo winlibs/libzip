@@ -1,4 +1,4 @@
-.TH "ZIPMERGE" "1" "January 19, 2016" "NiH" "General Commands Manual"
+.TH "ZIPMERGE" "1" "December 18, 2017" "NiH" "General Commands Manual"
 .nh
 .if n .ad l
 .SH "NAME"
@@ -23,12 +23,14 @@ Supported options:
 .TP 5n
 \fB\-D\fR
 Ignore directory components in file name comparisons.
+This option is slow for archives with many files.
 .TP 5n
 \fB\-h\fR
 Display a short help message and exit.
 .TP 5n
 \fB\-I\fR
 Ignore case in file name comparisons
+This option is slow for archives with many files.
 .TP 5n
 \fB\-i\fR
 Ask before overwriting files.
@@ -54,6 +56,9 @@ exits 0 on success and >1 if an error occurred.
 zipcmp(1),
 ziptool(1),
 libzip(3)
+.SH "HISTORY"
+\fBzipmerge\fR
+was added in libzip 0.6.
 .SH "AUTHORS"
 Dieter Baron <\fIdillo@nih.at\fR>
 and

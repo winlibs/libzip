@@ -1,6 +1,6 @@
 /*
   zip_open.c -- open zip archive by name
-  Copyright (C) 1999-2016 Dieter Baron and Thomas Klausner
+  Copyright (C) 1999-2017 Dieter Baron and Thomas Klausner
 
   This file is part of libzip, a library to manipulate ZIP archives.
   The authors can be contacted at <libzip@nih.at>
@@ -157,12 +157,6 @@ zip_open_from_source(zip_source_t *src, int _flags, zip_error_t *error)
     }
 }
 
-ZIP_EXTERN void
-zip_register_progress_callback(zip_t *za, zip_progress_callback_t progress_callback)
-{
-    za->progress_callback = progress_callback;
-}
-
 
 zip_t *
 _zip_open(zip_source_t *src, unsigned int flags, zip_error_t *error)
@@ -212,6 +206,8 @@ _zip_open(zip_source_t *src, unsigned int flags, zip_error_t *error)
 
     free(cdir);
 
+    _zip_hash_reserve_capacity(za->names, za->nentry, &za->error);
+    
     for (idx = 0; idx < za->nentry; idx++) {
 	const zip_uint8_t *name = _zip_string_get(za->entry[idx].orig->filename, NULL, 0, error);
 	if (name == NULL) {
@@ -407,7 +403,6 @@ _zip_read_cdir(zip_t *za, zip_buffer_t *buffer, zip_uint64_t buf_offset, zip_err
 
             if (offset < 0) {
                 _zip_error_set_from_source(error, za->src);
-                _zip_buffer_free(cd_buffer);
                 _zip_cdir_free(cd);
                 return NULL;
             }
@@ -809,10 +804,16 @@ _zip_read_eocd64(zip_source_t *src, zip_buffer_t *buffer, zip_uint64_t buf_offse
     }
     if ((flags & ZIP_CHECKCONS) && (eocd_disk != eocd_disk64 || num_disks != num_disks64)) {
 	zip_error_set(error, ZIP_ER_INCONS, 0);
+        if (free_buffer) {
+            _zip_buffer_free(buffer);
+        }
 	return NULL;
     }
     if (num_disks != 0 || eocd_disk != 0) {
 	zip_error_set(error, ZIP_ER_MULTIDISK, 0);
+        if (free_buffer) {
+            _zip_buffer_free(buffer);
+        }
 	return NULL;
     }
 
@@ -846,7 +847,12 @@ _zip_read_eocd64(zip_source_t *src, zip_buffer_t *buffer, zip_uint64_t buf_offse
         zip_error_set(error, ZIP_ER_SEEK, EFBIG);
         return NULL;
     }
-    if ((flags & ZIP_CHECKCONS) && offset+size != eocd_offset) {
+    if (offset+size > buf_offset + eocd_offset) {
+	/* cdir spans past EOCD record */
+	zip_error_set(error, ZIP_ER_INCONS, 0);
+	return NULL;
+    }
+    if ((flags & ZIP_CHECKCONS) && offset+size != buf_offset + eocd_offset) {
 	zip_error_set(error, ZIP_ER_INCONS, 0);
 	return NULL;
     }

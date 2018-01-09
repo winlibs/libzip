@@ -1,6 +1,6 @@
 /*
   zip_fdopen.c -- open read-only archive from file descriptor
-  Copyright (C) 2009-2016 Dieter Baron and Thomas Klausner
+  Copyright (C) 2009-2017 Dieter Baron and Thomas Klausner
 
   This file is part of libzip, a library to manipulate ZIP archives.
   The authors can be contacted at <libzip@nih.at>
@@ -47,7 +47,7 @@ zip_fdopen(int fd_orig, int _flags, int *zep)
     zip_source_t *src;
     struct zip_error error;
 
-    if (_flags < 0 || (_flags & ZIP_TRUNCATE)) {
+    if (_flags < 0 || (_flags & ~(ZIP_CHECKCONS|ZIP_RDONLY))) {
 	_zip_set_open_error(zep, NULL, ZIP_ER_INVAL);
         return  NULL;
     }

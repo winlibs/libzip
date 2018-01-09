@@ -1,4 +1,4 @@
-.TH "ZIP_NAME_LOCATE" "3" "July 21, 2012" "NiH" "Library Functions Manual"
+.TH "ZIP_NAME_LOCATE" "3" "December 18, 2017" "NiH" "Library Functions Manual"
 .nh
 .if n .ad l
 .SH "NAME"
@@ -10,6 +10,7 @@ libzip (-lzip)
 \fB#include <zip.h>\fR
 .sp
 \fIzip_int64_t\fR
+.br
 .PD 0
 .HP 4n
 \fBzip_name_locate\fR(\fIzip_t\ *archive\fR, \fIconst\ char\ *fname\fR, \fIzip_flags_t\ flags\fR);
@@ -34,9 +35,15 @@ the following values, or 0 for none of them.
 \fRZIP_FL_NOCASE\fR
 Ignore case distinctions.
 (Will only work well if the file names are ASCII.)
+With this flag,
+\fBzip_name_locate\fR()
+will be slow for archives with many files.
 .TP 15n
 \fRZIP_FL_NODIR\fR
 Ignore directory part of file name in archive.
+With this flag,
+\fBzip_name_locate\fR()
+will be slow for archives with many files.
 .TP 15n
 \fRZIP_FL_ENC_RAW\fR
 .br
@@ -65,19 +72,32 @@ does not contain an entry of that name.
 \fBzip_name_locate\fR()
 fails if:
 .TP 19n
-[\fRZIP_ER_NOENT\fR]
-No entry of the name
-\fIfname\fR
-is found in the archive.
-.TP 19n
 [\fRZIP_ER_INVAL\fR]
 One of the arguments is invalid.
 .TP 19n
 [\fRZIP_ER_MEMORY\fR]
 Required memory could not be allocated.
+.TP 19n
+[\fRZIP_ER_NOENT\fR]
+No entry of the name
+\fIfname\fR
+is found in the archive.
 .SH "SEE ALSO"
 libzip(3),
 zip_get_name(3)
+.SH "HISTORY"
+\fBzip_name_locate\fR()
+was added in libzip 0.6.
+In libzip 0.11 the return type was changed from
+\fIint\fR
+to
+\fIzip_int64_t\fR.
+In libzip 0.11 the type of
+\fIflags\fR
+was changed from
+\fIint\fR
+to
+\fIzip_flags_t\fR.
 .SH "AUTHORS"
 Dieter Baron <\fIdillo@nih.at\fR>
 and

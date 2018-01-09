@@ -3,7 +3,7 @@
 
 /*
   zip.h -- exported declarations.
-  Copyright (C) 1999-2016 Dieter Baron and Thomas Klausner
+  Copyright (C) 1999-2017 Dieter Baron and Thomas Klausner
 
   This file is part of libzip, a library to manipulate ZIP archives.
   The authors can be contacted at <libzip@nih.at>
@@ -35,6 +35,15 @@
 */
 
 
+#ifdef __cplusplus
+extern "C" {
+#if 0
+} /* fix autoindent */
+#endif
+#endif
+
+#include <zipconf.h>
+
 #ifndef ZIP_EXTERN
 # ifndef ZIP_STATIC
 #  ifdef _WIN32
@@ -48,15 +57,6 @@
 #  define ZIP_EXTERN
 # endif
 #endif
-
-#ifdef __cplusplus
-extern "C" {
-#if 0
-} /* fix autoindent */
-#endif
-#endif
-
-#include <zipconf.h>
 
 #include <sys/types.h>
 #include <stdio.h>
@@ -102,37 +102,38 @@ extern "C" {
 
 /* libzip error codes */
 
-#define ZIP_ER_OK             0  /* N No error */
-#define ZIP_ER_MULTIDISK      1  /* N Multi-disk zip archives not supported */
-#define ZIP_ER_RENAME         2  /* S Renaming temporary file failed */
-#define ZIP_ER_CLOSE          3  /* S Closing zip archive failed */
-#define ZIP_ER_SEEK           4  /* S Seek error */
-#define ZIP_ER_READ           5  /* S Read error */
-#define ZIP_ER_WRITE          6  /* S Write error */
-#define ZIP_ER_CRC            7  /* N CRC error */
-#define ZIP_ER_ZIPCLOSED      8  /* N Containing zip archive was closed */
-#define ZIP_ER_NOENT          9  /* N No such file */
-#define ZIP_ER_EXISTS        10  /* N File already exists */
-#define ZIP_ER_OPEN          11  /* S Can't open file */
-#define ZIP_ER_TMPOPEN       12  /* S Failure to create temporary file */
-#define ZIP_ER_ZLIB          13  /* Z Zlib error */
-#define ZIP_ER_MEMORY        14  /* N Malloc failure */
-#define ZIP_ER_CHANGED       15  /* N Entry has been changed */
-#define ZIP_ER_COMPNOTSUPP   16  /* N Compression method not supported */
-#define ZIP_ER_EOF           17  /* N Premature end of file */
-#define ZIP_ER_INVAL         18  /* N Invalid argument */
-#define ZIP_ER_NOZIP         19  /* N Not a zip archive */
-#define ZIP_ER_INTERNAL      20  /* N Internal error */
-#define ZIP_ER_INCONS        21  /* N Zip archive inconsistent */
-#define ZIP_ER_REMOVE        22  /* S Can't remove file */
-#define ZIP_ER_DELETED       23  /* N Entry has been deleted */
-#define ZIP_ER_ENCRNOTSUPP   24  /* N Encryption method not supported */
-#define ZIP_ER_RDONLY        25  /* N Read-only archive */
-#define ZIP_ER_NOPASSWD      26  /* N No password provided */
-#define ZIP_ER_WRONGPASSWD   27  /* N Wrong password provided */
-#define ZIP_ER_OPNOTSUPP     28  /* N Operation not supported */
-#define ZIP_ER_INUSE         29  /* N Resource still in use */
-#define ZIP_ER_TELL          30  /* S Tell error */
+#define ZIP_ER_OK                0  /* N No error */
+#define ZIP_ER_MULTIDISK         1  /* N Multi-disk zip archives not supported */
+#define ZIP_ER_RENAME            2  /* S Renaming temporary file failed */
+#define ZIP_ER_CLOSE             3  /* S Closing zip archive failed */
+#define ZIP_ER_SEEK              4  /* S Seek error */
+#define ZIP_ER_READ              5  /* S Read error */
+#define ZIP_ER_WRITE             6  /* S Write error */
+#define ZIP_ER_CRC               7  /* N CRC error */
+#define ZIP_ER_ZIPCLOSED         8  /* N Containing zip archive was closed */
+#define ZIP_ER_NOENT             9  /* N No such file */
+#define ZIP_ER_EXISTS           10  /* N File already exists */
+#define ZIP_ER_OPEN             11  /* S Can't open file */
+#define ZIP_ER_TMPOPEN          12  /* S Failure to create temporary file */
+#define ZIP_ER_ZLIB             13  /* Z Zlib error */
+#define ZIP_ER_MEMORY           14  /* N Malloc failure */
+#define ZIP_ER_CHANGED          15  /* N Entry has been changed */
+#define ZIP_ER_COMPNOTSUPP      16  /* N Compression method not supported */
+#define ZIP_ER_EOF              17  /* N Premature end of file */
+#define ZIP_ER_INVAL            18  /* N Invalid argument */
+#define ZIP_ER_NOZIP            19  /* N Not a zip archive */
+#define ZIP_ER_INTERNAL         20  /* N Internal error */
+#define ZIP_ER_INCONS           21  /* N Zip archive inconsistent */
+#define ZIP_ER_REMOVE           22  /* S Can't remove file */
+#define ZIP_ER_DELETED          23  /* N Entry has been deleted */
+#define ZIP_ER_ENCRNOTSUPP      24  /* N Encryption method not supported */
+#define ZIP_ER_RDONLY           25  /* N Read-only archive */
+#define ZIP_ER_NOPASSWD         26  /* N No password provided */
+#define ZIP_ER_WRONGPASSWD      27  /* N Wrong password provided */
+#define ZIP_ER_OPNOTSUPP        28  /* N Operation not supported */
+#define ZIP_ER_INUSE            29  /* N Resource still in use */
+#define ZIP_ER_TELL             30  /* S Tell error */
+#define ZIP_ER_COMPRESSED_DATA	31  /* N Compressed data invalid */
 
 /* type of system error value */
 
@@ -226,11 +227,13 @@ enum zip_source_cmd {
     ZIP_SOURCE_SEEK_WRITE,      /* set position for writing */
     ZIP_SOURCE_TELL_WRITE,      /* get write position */
     ZIP_SOURCE_SUPPORTS,        /* check whether source supports command */
-    ZIP_SOURCE_REMOVE           /* remove file */
+    ZIP_SOURCE_REMOVE,          /* remove file */
+    ZIP_SOURCE_GET_COMPRESSION_FLAGS,	/* get compression flags, internal only */
+    ZIP_SOURCE_BEGIN_WRITE_CLONING	/* like ZIP_SOURCE_BEGIN_WRITE, but keep part of original file */
 };
 typedef enum zip_source_cmd zip_source_cmd_t;
 
-#define ZIP_SOURCE_MAKE_COMMAND_BITMASK(cmd)    (1<<(cmd))
+#define ZIP_SOURCE_MAKE_COMMAND_BITMASK(cmd)    (((zip_int64_t)1)<<(cmd))
 
 #define ZIP_SOURCE_SUPPORTS_READABLE	(ZIP_SOURCE_MAKE_COMMAND_BITMASK(ZIP_SOURCE_OPEN) \
                                          | ZIP_SOURCE_MAKE_COMMAND_BITMASK(ZIP_SOURCE_READ) \
@@ -294,6 +297,11 @@ struct zip_stat {
     zip_uint32_t flags;			/* reserved for future use */
 };
 
+struct zip_buffer_fragment {
+    zip_uint8_t *data;
+    zip_uint64_t length;
+};
+
 struct zip;
 struct zip_file;
 struct zip_source;
@@ -303,14 +311,17 @@ typedef struct zip_error zip_error_t;
 typedef struct zip_file zip_file_t;
 typedef struct zip_source zip_source_t;
 typedef struct zip_stat zip_stat_t;
+typedef struct zip_buffer_fragment zip_buffer_fragment_t;
 
 typedef zip_uint32_t zip_flags_t;
 
 typedef zip_int64_t (*zip_source_callback)(void *, void *, zip_uint64_t, zip_source_cmd_t);
-typedef void (*zip_progress_callback_t)(double);
-
+typedef void (*zip_progress_callback)(zip_t *, double, void *);
 
 #ifndef ZIP_DISABLE_DEPRECATED
+typedef void (*zip_progress_callback_t)(double);
+ZIP_EXTERN void zip_register_progress_callback(zip_t *, zip_progress_callback_t); /* use zip_register_progress_callback_with_state */
+
 ZIP_EXTERN zip_int64_t zip_add(zip_t *, const char *, zip_source_t *); /* use zip_file_add */
 ZIP_EXTERN zip_int64_t zip_add_dir(zip_t *, const char *); /* use zip_dir_add */
 ZIP_EXTERN const char *zip_get_file_comment(zip_t *, zip_uint64_t, int *, int); /* use zip_file_get_comment */
@@ -320,7 +331,7 @@ ZIP_EXTERN int zip_replace(zip_t *, zip_uint64_t, zip_source_t *); /* use zip_fi
 ZIP_EXTERN int zip_set_file_comment(zip_t *, zip_uint64_t, const char *, int); /* use zip_file_set_comment */
 ZIP_EXTERN int zip_error_get_sys_type(int); /* use zip_error_system_type */
 ZIP_EXTERN void zip_error_get(zip_t *, int *, int *); /* use zip_get_error, zip_error_code_zip / zip_error_code_system */
-ZIP_EXTERN int zip_error_to_str(char *, zip_uint64_t, int, int);
+ZIP_EXTERN int zip_error_to_str(char *, zip_uint64_t, int, int); /* use zip_error_init_with_code / zip_error_strerror */
 ZIP_EXTERN void zip_file_error_get(zip_file_t *, int *, int *); /* use zip_file_get_error, zip_error_code_zip / zip_error_code_system */
 #endif
 
@@ -373,17 +384,21 @@ ZIP_EXTERN const char *zip_get_archive_comment(zip_t *, int *, zip_flags_t);
 ZIP_EXTERN int zip_get_archive_flag(zip_t *, zip_flags_t, zip_flags_t);
 ZIP_EXTERN const char *zip_get_name(zip_t *, zip_uint64_t, zip_flags_t);
 ZIP_EXTERN zip_int64_t zip_get_num_entries(zip_t *, zip_flags_t);
+ZIP_EXTERN const char *zip_libzip_version(void);
 ZIP_EXTERN zip_int64_t zip_name_locate(zip_t *, const char *, zip_flags_t);
 ZIP_EXTERN zip_t *zip_open(const char *, int, int *);
 ZIP_EXTERN zip_t *zip_open_from_source(zip_source_t *, int, zip_error_t *);
-ZIP_EXTERN void zip_register_progress_callback(zip_t *, zip_progress_callback_t);
+ZIP_EXTERN int zip_register_progress_callback_with_state(zip_t *, double, zip_progress_callback, void (*)(void *), void *);
 ZIP_EXTERN int zip_set_archive_comment(zip_t *, const char *, zip_uint16_t);
 ZIP_EXTERN int zip_set_archive_flag(zip_t *, zip_flags_t, int);
 ZIP_EXTERN int zip_set_default_password(zip_t *, const char *);
 ZIP_EXTERN int zip_set_file_compression(zip_t *, zip_uint64_t, zip_int32_t, zip_uint32_t);
 ZIP_EXTERN int zip_source_begin_write(zip_source_t *);
+ZIP_EXTERN int zip_source_begin_write_cloning(zip_source_t *, zip_uint64_t);
 ZIP_EXTERN zip_source_t *zip_source_buffer(zip_t *, const void *, zip_uint64_t, int);
 ZIP_EXTERN zip_source_t *zip_source_buffer_create(const void *, zip_uint64_t, int, zip_error_t *);
+ZIP_EXTERN zip_source_t *zip_source_buffer_fragment(zip_t *, const zip_buffer_fragment_t *, zip_uint64_t, int);
+ZIP_EXTERN zip_source_t *zip_source_buffer_fragment_create(const zip_buffer_fragment_t *, zip_uint64_t, int, zip_error_t *);
 ZIP_EXTERN int zip_source_close(zip_source_t *);
 ZIP_EXTERN int zip_source_commit_write(zip_source_t *);
 ZIP_EXTERN zip_error_t *zip_source_error(zip_source_t *);

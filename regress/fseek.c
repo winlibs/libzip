@@ -1,6 +1,6 @@
 /*
   fseek.c -- test tool for seeking in zip archives
-  Copyright (C) 2016 Dieter Baron and Thomas Klausner
+  Copyright (C) 2016-2017 Dieter Baron and Thomas Klausner
 
   This file is part of libzip, a library to manipulate ZIP archives.
   The authors can be contacted at <libzip@nih.at>
@@ -30,6 +30,8 @@
   OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
   IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
+
+#include "compat.h"
 
 #include <stdlib.h>
 

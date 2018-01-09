@@ -1,6 +1,6 @@
 /*
   zip_source_open.c -- open zip_source (prepare for reading)
-  Copyright (C) 2009-2016 Dieter Baron and Thomas Klausner
+  Copyright (C) 2009-2017 Dieter Baron and Thomas Klausner
 
   This file is part of libzip, a library to manipulate ZIP archives.
   The authors can be contacted at <libzip@nih.at>
@@ -68,6 +68,7 @@ zip_source_open(zip_source_t *src)
     }
 
     src->eof = false;
+    src->had_read_error = false;
     _zip_error_clear(&src->error);
     src->open_count++;
     

@@ -1,6 +1,6 @@
 /*
   zip_extra_field.c -- manipulate extra fields
-  Copyright (C) 2012-2016 Dieter Baron and Thomas Klausner
+  Copyright (C) 2012-2017 Dieter Baron and Thomas Klausner
 
   This file is part of libzip, a library to manipulate ZIP archives.
   The authors can be contacted at <libzip@nih.at>
@@ -162,7 +162,7 @@ _zip_ef_merge(zip_extra_field_t *to, zip_extra_field_t *from)
 
 	duplicate = 0;
 	for (tt=to; tt; tt=tt->next) {
-	    if (tt->id == from->id && tt->size == from->size && memcmp(tt->data, from->data, tt->size) == 0) {
+	    if (tt->id == from->id && tt->size == from->size && (tt->size == 0 || memcmp(tt->data, from->data, tt->size) == 0)) {
 		tt->flags |= (from->flags & ZIP_EF_BOTH);
 		duplicate = 1;
 		break;

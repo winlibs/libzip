@@ -1,4 +1,4 @@
-.TH "ZIP_FILE_GET_EXTERNAL_ATTRIBUTES" "3" "December 29, 2016" "NiH" "Library Functions Manual"
+.TH "ZIP_FILE_GET_EXTERNAL_ATTRIBUTES" "3" "December 18, 2017" "NiH" "Library Functions Manual"
 .nh
 .if n .ad l
 .SH "NAME"
@@ -132,6 +132,9 @@ is not a valid file index in
 .SH "SEE ALSO"
 libzip(3),
 zip_file_set_external_attributes(3)
+.SH "HISTORY"
+\fBzip_file_get_external_attributes\fR()
+was added in libzip 0.11.2.
 .SH "AUTHORS"
 Dieter Baron <\fIdillo@nih.at\fR>
 and

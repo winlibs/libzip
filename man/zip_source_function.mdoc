@@ -1,5 +1,5 @@
 .\" zip_source_function.mdoc -- create data source from function
-.\" Copyright (C) 2004-2016 Dieter Baron and Thomas Klausner
+.\" Copyright (C) 2004-2017 Dieter Baron and Thomas Klausner
 .\"
 .\" This file is part of libzip, a library to manipulate ZIP archives.
 .\" The authors can be contacted at <libzip@nih.at>
@@ -29,11 +29,12 @@
 .\" OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
 .\" IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd December 16, 2016
+.Dd December 18, 2017
 .Dt ZIP_SOURCE_FUNCTION 3
 .Os
 .Sh NAME
-.Nm zip_source_function
+.Nm zip_source_function ,
+.Nm zip_source_function_create
 .Nd create data source from function
 .Sh LIBRARY
 libzip (-lzip)
@@ -112,6 +113,17 @@ and
 .Ss Dv ZIP_SOURCE_BEGIN_WRITE
 Prepare the source for writing.
 Use this to create any temporary file(s).
+.Ss Dv ZIP_SOURCE_BEGIN_WRITE_CLONING
+Prepare the source for writing, keeping the first
+.Ar len
+bytes of the original file.
+Only implement this command if it is more efficient than copying the
+data, and if it does not destructively overwrite the original file
+(you still have to be able to execute
+.Dv ZIP_SOURCE_ROLLBACK_WRITE ) .
+.Pp
+The next write should happen at byte
+.Ar offset .
 .Ss Dv ZIP_SOURCE_CLOSE
 Reading is done.
 .Ss Dv ZIP_SOURCE_COMMIT_WRITE
@@ -135,7 +147,7 @@ and return its return value.
 Otherwise, return 2 * sizeof(int).
 .Ss Dv ZIP_SOURCE_FREE
 Clean up and free all resources, including
-.Ar state .
+.Ar userdata .
 The callback function will not be called again.
 .Ss Dv ZIP_SOURCE_OPEN
 Prepare for reading.
@@ -186,13 +198,33 @@ points to an allocated
 which should be initialized using
 .Xr zip_stat_init 3
 and then filled in.
-Information only available after the source has been read (e.g. size)
+.Pp
+For uncompressed, unencrypted data, all information is optional.
+However, fill in as much information as is readily available. 
+.Pp
+If the data is compressed,
+.Dv ZIP_STAT_COMP_METHOD ,
+.Dv ZIP_STAT_SIZE ,
+and
+.Dv ZIP_STAT_CRC
+must be filled in.
+.Pp
+If the data is encrypted,
+.Dv ZIP_STAT_ENCRYPTION_METHOD ,
+.Dv ZIP_STAT_COMP_METHOD ,
+.Dv ZIP_STAT_SIZE ,
+and
+.Dv ZIP_STAT_CRC
+must be filled in.
+.Pp
+Information only available after the source has been read (e.g., size)
 can be omitted in an earlier call.
-Return sizeof(struct zip_stat) on success.
 .Em NOTE :
 .Fn zip_source_function
 may be called with this argument even after being called with
 .Dv ZIP_SOURCE_CLOSE .
+.Pp
+Return sizeof(struct zip_stat) on success.
 .Ss Dv ZIP_SOURCE_SUPPORTS
 Return bitmap specifying which commands are supported.
 Use
@@ -231,6 +263,8 @@ If the function is unable to provide the data again, it should
 return \-1.
 .Pp
 .Dv ZIP_SOURCE_BEGIN_WRITE
+or
+.Dv ZIP_SOURCE_BEGIN_WRITE_CLONING
 will be called before
 .Dv ZIP_SOURCE_WRITE ,
 .Dv ZIP_SOURCE_SEEK_WRITE ,
@@ -241,7 +275,6 @@ When writing is complete, either
 or
 .Dv ZIP_SOURCE_ROLLBACK_WRITE
 will be called.
-.Dv
 .Pp
 .Dv ZIP_SOURCE_STAT
 can be issued at any time.
@@ -260,6 +293,8 @@ will be called before
 .Dv ZIP_SOURCE_FREE ,
 and similarly for
 .Dv ZIP_SOURCE_BEGIN_WRITE
+or
+.Dv ZIP_SOURCE_BEGIN_WRITE_CLONING
 and
 .Dv ZIP_SOURCE_COMMIT_WRITE
 or
@@ -288,6 +323,11 @@ Required memory could not be allocated.
 .Xr zip_replace 3 ,
 .Xr zip_source 3 ,
 .Xr zip_stat_init 3
+.Sh HISTORY
+.Fn zip_source_function
+and
+.Fn zip_source_function_create
+were added in libzip 1.0.
 .Sh AUTHORS
 .An -nosplit
 .An Dieter Baron Aq Mt dillo@nih.at

@@ -3,7 +3,7 @@
 
 /*
   compat.h -- compatibility defines.
-  Copyright (C) 1999-2016 Dieter Baron and Thomas Klausner
+  Copyright (C) 1999-2017 Dieter Baron and Thomas Klausner
 
   This file is part of libzip, a library to manipulate ZIP archives.
   The authors can be contacted at <libzip@nih.at>
@@ -72,6 +72,9 @@ typedef char bool;
 #endif
 
 #ifdef _WIN32
+#if defined(HAVE__CHMOD)
+#define chmod		_chmod
+#endif
 #if defined(HAVE__CLOSE)
 #define close		_close
 #endif
@@ -106,6 +109,12 @@ typedef char bool;
 #endif
 #if !defined(HAVE_STRTOULL) && defined(HAVE__STRTOUI64)
 #define strtoull	_strtoui64
+#endif
+#if defined(HAVE__UMASK)
+#define umask	_umask
+#endif
+#if defined(HAVE__UNLINK)
+#define unlink	_unlink
 #endif
 #endif
 

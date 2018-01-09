@@ -1,6 +1,6 @@
 /*
   zip_random_unix.c -- fill the user's buffer with random stuff (Unix version)
-  Copyright (C) 2016 Dieter Baron and Thomas Klausner
+  Copyright (C) 2016-2017 Dieter Baron and Thomas Klausner
 
   This file is part of libzip, a library to manipulate ZIP archives.
   The authors can be contacted at <libzip@nih.at>
@@ -34,6 +34,7 @@
 #include "zipint.h"
 
 #include <fcntl.h>
+#include <unistd.h>
 
 bool
 zip_random(zip_uint8_t *buffer, zip_uint16_t length)

@@ -1,6 +1,6 @@
 /*
   zip_source_filep.c -- create data source from FILE *
-  Copyright (C) 1999-2016 Dieter Baron and Thomas Klausner
+  Copyright (C) 1999-2017 Dieter Baron and Thomas Klausner
 
   This file is part of libzip, a library to manipulate ZIP archives.
   The authors can be contacted at <libzip@nih.at>
@@ -40,6 +40,11 @@
 
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
+#endif
+
+#ifdef HAVE_CLONEFILE
+#include <sys/attr.h>
+#include <sys/clonefile.h>
 #endif
 
 #ifdef _WIN32
@@ -84,6 +89,9 @@ struct read_file {
 
 static zip_int64_t read_file(void *state, void *data, zip_uint64_t len, zip_source_cmd_t cmd);
 static int create_temp_output(struct read_file *ctx);
+#ifdef HAVE_CLONEFILE
+static zip_int64_t create_temp_output_cloning(struct read_file *ctx, zip_uint64_t offset);
+#endif
 static int _zip_fseek_u(FILE *f, zip_uint64_t offset, int whence, zip_error_t *error);
 static int _zip_fseek(FILE *f, zip_int64_t offset, int whence, zip_error_t *error);
 
@@ -115,6 +123,8 @@ _zip_source_file_or_p(const char *fname, FILE *file, zip_uint64_t start, zip_int
 {
     struct read_file *ctx;
     zip_source_t *zs;
+    struct stat sb;
+    bool stat_valid;
 
     if (file == NULL && fname == NULL) {
 	zip_error_set(error, ZIP_ER_INVAL, 0);
@@ -170,42 +180,52 @@ _zip_source_file_or_p(const char *fname, FILE *file, zip_uint64_t start, zip_int
     ctx->supports = ZIP_SOURCE_SUPPORTS_READABLE | zip_source_make_command_bitmap(ZIP_SOURCE_SUPPORTS, ZIP_SOURCE_TELL, -1);
 
     if (ctx->fname) {
-	struct stat sb;
-	if (stat(ctx->fname, &sb) < 0) {
-	    zip_error_set(&ctx->stat_error, ZIP_ER_READ, errno);
+	stat_valid = stat(ctx->fname, &sb) >= 0;
+
+	if (!stat_valid) {
 	    if (ctx->start == 0 && ctx->end == 0) {
 		ctx->supports = ZIP_SOURCE_SUPPORTS_WRITABLE;
 	    }
 	}
-	else {
-	    if ((ctx->st.valid & ZIP_STAT_MTIME) == 0) {
-		ctx->st.mtime = sb.st_mtime;
-		ctx->st.valid |= ZIP_STAT_MTIME;
+    }
+    else {
+	stat_valid = fstat(fileno(ctx->f), &sb) >= 0;
+    }
+
+    if (!stat_valid) {
+	zip_error_set(&ctx->stat_error, ZIP_ER_READ, errno);
+    }
+    else {
+	if ((ctx->st.valid & ZIP_STAT_MTIME) == 0) {
+	    ctx->st.mtime = sb.st_mtime;
+	    ctx->st.valid |= ZIP_STAT_MTIME;
+	}
+	if (S_ISREG(sb.st_mode)) {
+	    ctx->supports = ZIP_SOURCE_SUPPORTS_SEEKABLE;
+
+	    if (ctx->start + ctx->end > (zip_uint64_t)sb.st_size) {
+		zip_error_set(error, ZIP_ER_INVAL, 0);
+		free(ctx->fname);
+		free(ctx);
+		return NULL;
 	    }
-	    if (S_ISREG(sb.st_mode)) {
-		ctx->supports = ZIP_SOURCE_SUPPORTS_SEEKABLE;
 
-		if (ctx->start + ctx->end > (zip_uint64_t)sb.st_size) {
-		    zip_error_set(error, ZIP_ER_INVAL, 0);
-		    free(ctx->fname);
-		    free(ctx);
-		    return NULL;
-		}
-
-		if (ctx->end == 0) {
-		    ctx->st.size = (zip_uint64_t)sb.st_size - ctx->start;
-		    ctx->st.valid |= ZIP_STAT_SIZE;
-
-		    if (start == 0) {
-			ctx->supports = ZIP_SOURCE_SUPPORTS_WRITABLE;
-		    }
+	    if (ctx->end == 0) {
+		ctx->st.size = (zip_uint64_t)sb.st_size - ctx->start;
+		ctx->st.valid |= ZIP_STAT_SIZE;
+		
+		if (ctx->fname && start == 0) {
+		    ctx->supports = ZIP_SOURCE_SUPPORTS_WRITABLE;
 		}
 	    }
 	}
     }
-    else if (fseeko(ctx->f, 0, SEEK_CUR) == 0) {
-        ctx->supports = ZIP_SOURCE_SUPPORTS_SEEKABLE;
+
+#ifdef HAVE_CLONEFILE
+    if (ctx->supports & ZIP_SOURCE_MAKE_COMMAND_BITMASK(ZIP_SOURCE_BEGIN_WRITE)) {
+        ctx->supports |= ZIP_SOURCE_MAKE_COMMAND_BITMASK(ZIP_SOURCE_BEGIN_WRITE_CLONING);
     }
+#endif
 
     if ((zs=zip_source_function_create(read_file, ctx, error)) == NULL) {
 	free(ctx->fname);
@@ -262,6 +282,56 @@ create_temp_output(struct read_file *ctx)
     return 0;
 }
 
+#ifdef HAVE_CLONEFILE
+zip_int64_t
+static create_temp_output_cloning(struct read_file *ctx, zip_uint64_t offset)
+{
+    char *temp;
+    FILE *tfp;
+
+    if (offset > ZIP_OFF_MAX) {
+        zip_error_set(&ctx->error, ZIP_ER_SEEK, E2BIG);
+        return -1;
+    }
+
+    if ((temp=(char *)malloc(strlen(ctx->fname)+8)) == NULL) {
+        zip_error_set(&ctx->error, ZIP_ER_MEMORY, 0);
+        return -1;
+    }
+    sprintf(temp, "%s.XXXXXX", ctx->fname);
+
+    if (mktemp(temp) == NULL) {
+        zip_error_set(&ctx->error, ZIP_ER_TMPOPEN, errno);
+        free(temp);
+        return -1;
+    }
+
+    if (clonefile(ctx->fname, temp, 0) < 0) {
+        zip_error_set(&ctx->error, ZIP_ER_TMPOPEN, errno);
+        free(temp);
+        return -1;
+    }
+    if ((tfp=fopen(temp, "r+b")) == NULL) {
+        zip_error_set(&ctx->error, ZIP_ER_TMPOPEN, errno);
+        (void)remove(temp);
+        free(temp);
+        return -1;
+    }
+    if (ftruncate(fileno(tfp), (off_t)offset) < 0
+        || fseeko(tfp, (off_t)offset, SEEK_SET) < 0) {
+        zip_error_set(&ctx->error, ZIP_ER_TMPOPEN, errno);
+        (void)remove(temp);
+        free(temp);
+        return -1;
+    }
+
+    ctx->fout = tfp;
+    ctx->tmpname = temp;
+
+    return 0;
+}
+#endif
+
 
 static zip_int64_t
 read_file(void *state, void *data, zip_uint64_t len, zip_source_cmd_t cmd)
@@ -281,6 +351,15 @@ read_file(void *state, void *data, zip_uint64_t len, zip_source_cmd_t cmd)
                 return -1;
             }
             return create_temp_output(ctx);
+
+#ifdef HAVE_CLONEFILE
+        case ZIP_SOURCE_BEGIN_WRITE_CLONING:
+            if (ctx->fname == NULL) {
+                zip_error_set(&ctx->error, ZIP_ER_OPNOTSUPP, 0);
+                return -1;
+            }
+            return create_temp_output_cloning(ctx, len);
+#endif
 
         case ZIP_SOURCE_COMMIT_WRITE: {
 	    mode_t mask;

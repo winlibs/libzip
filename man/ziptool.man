@@ -1,4 +1,4 @@
-.TH "ZIPTOOL" "1" "December 16, 2016" "NiH" "General Commands Manual"
+.TH "ZIPTOOL" "1" "December 18, 2017" "NiH" "General Commands Manual"
 .nh
 .if n .ad l
 .SH "NAME"
@@ -7,7 +7,7 @@
 .SH "SYNOPSIS"
 .HP 8n
 \fBziptool\fR
-[\fB\-cegHhmnrst\fR]
+[\fB\-ceghnrst\fR]
 [\fB\-l\fR\ \fIlength\fR]
 [\fB\-o\fR\ \fIoffset\fR]
 \fIzip-archive\fR
@@ -35,17 +35,6 @@ Guess file name encoding (for
 \fBstat\fR
 command).
 .TP 13n
-\fB\-H\fR
-Write files with
-\(Lqholes\(Rq
-compactly.
-In other words, when the modified zip archive contains long runs of zeroes,
-write a basic run-length encoded block instead.
-\fINote\fR:
-This command is for internal testing of
-libzip(3)
-and will usually create invalid zip archives.
-.TP 13n
 \fB\-h\fR
 Display help.
 .TP 13n
@@ -55,12 +44,6 @@ Only read
 bytes of archive.
 See also
 \fB\-o\fR.
-.TP 13n
-\fB\-m\fR
-Read archive into memory, and modify there; write out at end.
-\fINote\fR:
-This command is for internal testing of
-libzip(3).
 .TP 13n
 \fB\-n\fR
 Create archive if it doesn't exist.
@@ -126,14 +109,6 @@ and reading
 \fIlen\fR
 bytes from
 \fIoffset\fR.
-.TP 12n
-\fBadd_nul\fR \fIname length\fR
-Add a file
-\fIname\fR
-consisting of
-\fIlength\fR
-NUL bytes.
-(Mostly useful for testing.)
 .TP 12n
 \fBcat\fR \fIindex\fR
 Output file contents for entry
@@ -284,15 +259,6 @@ Set default password for encryption/decryption to
 \fBstat\fR \fIindex\fR
 Print information about archive entry
 \fIindex\fR.
-.TP 12n
-\fBunchange_all\fR
-Revert all changes up to that point.
-Mostly useful for testing.
-.TP 12n
-\fBzin_close\fR \fIindex\fR
-Close input zip_source
-\fIindex\fR.
-For internal tests only.
 .SS "Flags"
 Some commands take flag arguments.
 Supported flags are:
@@ -382,6 +348,9 @@ ziptool testfile.zip delete 0
 zipcmp(1),
 zipmerge(1),
 libzip(3)
+.SH "HISTORY"
+\fBziptool\fR
+was added in libzip 1.1.
 .SH "AUTHORS"
 Dieter Baron <\fIdillo@nih.at\fR>
 and

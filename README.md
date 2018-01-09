@@ -6,29 +6,22 @@ Winzip AES and decryption of legacy PKware encrypted files is
 supported. The API is documented by man pages.
 
 For more information, take a look at the included man pages.  You can
-start with [libzip(3)](http://nih.at/libzip/libzip.html), which lists
-all others.  Example source code is in the `src/` subdirectory.
+start with [libzip(3)](https://libzip.org/documentation/libzip.html), which lists
+all others.  Example source code is in the `examples/` and  `src/` subdirectories.
 
 If you have developed an application using libzip, you can find out
 about API changes and how to adapt your code for them in the included
-file `API-CHANGES`.
+file [API-CHANGES.md](API-CHANGES.md).
 
-For generic installation instructions, see file `INSTALL`, which
-describes the approach using autoconf; alternatively, you can
-use cmake to build.
-
-Additionally, you'll need zlib (at least version 1.1.2). It comes
-with most operating systems nowadays, or you can get it at
->	http://www.zlib.net/
-
-When using a static Windows library, you need to define `ZIP_STATIC`
-when compiling packages using libzip.
+See the [INSTALL.md](INSTALL.md) file for installation instructions and
+dependencies.
 
 If you make a binary distribution, please include a pointer to the
 distribution site:
->	http://www.nih.at/libzip/
+>	https://libzip.org/
 
-The latest version can always be found there.
+The latest version can always be found there.  The official repository
+is at [github](https://github.com/nih-at/libzip/).
 
 There is a mailing list for developers using libzip.  You can
 subscribe to it by sending a mail with the subject "subscribe

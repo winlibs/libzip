@@ -1,6 +1,6 @@
 /*
   zip_source_read.c -- read data from zip_source
-  Copyright (C) 2009-2016 Dieter Baron and Thomas Klausner
+  Copyright (C) 2009-2017 Dieter Baron and Thomas Klausner
 
   This file is part of libzip, a library to manipulate ZIP archives.
   The authors can be contacted at <libzip@nih.at>
@@ -49,7 +49,7 @@ zip_source_read(zip_source_t *src, void *data, zip_uint64_t len)
 	return -1;
     }
 
-    if (_zip_source_had_error(src)) {
+    if (src->had_read_error) {
 	return -1;
     }
 
@@ -60,6 +60,7 @@ zip_source_read(zip_source_t *src, void *data, zip_uint64_t len)
     bytes_read = 0;
     while (bytes_read < len) {
 	if ((n = _zip_source_call(src, (zip_uint8_t *)data + bytes_read, len - bytes_read, ZIP_SOURCE_READ)) < 0) {
+            src->had_read_error = true;
 	    if (bytes_read == 0) {
 		return -1;
 	    }

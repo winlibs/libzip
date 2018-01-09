@@ -1,5 +1,6 @@
 /*
-  nonrandomopen.c -- override open() of /dev/urandom
+  nonrandomopen.c -- override zip_random
+
   Copyright (C) 2017 Dieter Baron and Thomas Klausner
 
   This file is part of ckmame, a program to check rom sets for MAME.
@@ -31,51 +32,16 @@
   IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include <fcntl.h>
-#include <stdarg.h>
-#include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
-#define __USE_GNU
-#include <dlfcn.h>
-#undef __USE_GNU
+#include "compat.h"
+#include "zipint.h"
 
-#include "config.h"
-
-#if !defined(RTLD_NEXT)
-#define RTLD_NEXT	RTLD_DEFAULT
-#endif
-
-static int inited = 0;
-static int (*real_open)(const char *path, int mode, ...) = NULL;
-
-static void
-init(void)
+bool
+zip_random(zip_uint8_t *buffer, zip_uint16_t length)
 {
-    char *foo;
-    real_open = dlsym(RTLD_NEXT, "open");
-    if (!real_open)
-	abort();
-    inited = 1;
-}
+    memset(buffer, 0, length);
 
-int
-open(const char *path, int flags, ...)
-{
-    va_list ap;
-    mode_t mode;
-
-    if (!inited) {
-	init();
-    }
-
-    va_start(ap, flags);
-    mode = va_arg(ap, mode_t);
-    va_end(ap);
-
-    if (strcmp(path, "/dev/urandom") == 0) {
-	return real_open("/dev/zero", flags, mode);
-    } else {
-	return real_open(path, flags, mode);
-    }
+    return true;
 }
