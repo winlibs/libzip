@@ -1,6 +1,6 @@
 /*
   zip_random_uwp.c -- fill the user's buffer with random stuff (UWP version)
-  Copyright (C) 2017 Dieter Baron and Thomas Klausner
+  Copyright (C) 2017-2018 Dieter Baron and Thomas Klausner
 
   This file is part of libzip, a library to manipulate ZIP archives.
   The authors can be contacted at <libzip@nih.at>
@@ -31,16 +31,15 @@
   IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include <windows.h>
-#include <ntstatus.h>
 #include <bcrypt.h>
+#include <ntstatus.h>
+#include <windows.h>
 
 #include "zipint.h"
 #include "zipwin32.h"
 
-bool
-zip_random(zip_uint8_t *buffer, zip_uint16_t length)
-{
+ZIP_EXTERN bool
+zip_random(zip_uint8_t *buffer, zip_uint16_t length) {
     BCRYPT_ALG_HANDLE hAlg = NULL;
     NTSTATUS hr = BCryptOpenAlgorithmProvider(&hAlg, BCRYPT_RNG_ALGORITHM, MS_PRIMITIVE_PROVIDER, 0);
     if (hr != STATUS_SUCCESS || hAlg == NULL) {

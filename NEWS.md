@@ -1,3 +1,30 @@
+1.5.2 [2019-03-12]
+==================
+* Fix bug in AES encryption affecting certain file sizes
+* Keep file permissions when modifying zip archives
+* Support systems with small stack size.
+* Support mbed TLS as crypto backend.
+* Add nullability annotations.
+
+1.5.1 [2018-04-11]
+==================
+
+* Choose format of installed documentation based on available tools.
+* Fix visibility of symbols.
+* Fix zipcmp directory support.
+* Don't set RPATH on Linux.
+* Use Libs.private for link dependencies in pkg-config file.
+* Fix build with LibreSSL.
+* Various bugfixes.
+
+1.5.0 [2018-03-11]
+==================
+
+* Use standard cryptographic library instead of custom AES implementation.
+  This also simplifies the license.
+* Use `clang-format` to format the source code.
+* More Windows improvements.
+
 1.4.0 [2017-12-29]
 ==================
 

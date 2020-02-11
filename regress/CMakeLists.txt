@@ -1,8 +1,6 @@
 CHECK_FUNCTION_EXISTS(getopt HAVE_GETOPT)
 IF(NOT HAVE_GETOPT)
   SET(SRC_EXTRA_FILES ../src/getopt.c)
-INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR}
-  ${CMAKE_CURRENT_SOURCE_DIR}/../src)
 ENDIF()
 
 SET(TEST_PROGRAMS
@@ -31,8 +29,8 @@ TARGET_LINK_LIBRARIES(hole zip)
 ADD_EXECUTABLE(ziptool_regress ziptool_regress.c ${SRC_EXTRA_FILES} source_hole.c)
 TARGET_LINK_LIBRARIES(ziptool_regress zip)
 
-ADD_LIBRARY(malloc MODULE malloc.c)
-TARGET_LINK_LIBRARIES(malloc ${CMAKE_DL_LIBS})
+#ADD_LIBRARY(malloc MODULE malloc.c)
+#TARGET_LINK_LIBRARIES(malloc ${CMAKE_DL_LIBS})
 ADD_LIBRARY(nonrandomopen MODULE nonrandomopen.c)
 TARGET_LINK_LIBRARIES(nonrandomopen ${CMAKE_DL_LIBS})
 
@@ -51,15 +49,9 @@ ADD_CUSTOM_TARGET(cleanup
 ADD_CUSTOM_TARGET(testinput
   ALL
   VERBATIM
-  COMMAND ziptool ${CMAKE_CURRENT_SOURCE_DIR}/manyfiles-zip.zip cat 0 > manyfiles.zip
-  COMMAND ziptool ${CMAKE_CURRENT_SOURCE_DIR}/manyfiles-zip.zip cat 1 > manyfiles-133000.zip
-  COMMAND ziptool ${CMAKE_CURRENT_SOURCE_DIR}/manyfiles-zip.zip cat 2 > manyfiles-65536.zip
-  COMMAND ziptool ${CMAKE_CURRENT_SOURCE_DIR}/manyfiles-zip.zip cat 3 > manyfiles-zip64-modulo.zip
-  COMMAND ziptool ${CMAKE_CURRENT_SOURCE_DIR}/manyfiles-zip.zip cat 4 > manyfiles-zip64.zip
-  COMMAND ziptool ${CMAKE_CURRENT_SOURCE_DIR}/manyfiles-zip.zip cat 5 > manyfiles-fewer.zip
-  COMMAND ziptool ${CMAKE_CURRENT_SOURCE_DIR}/manyfiles-zip.zip cat 6 > manyfiles-more.zip
-  COMMAND ziptool ${CMAKE_CURRENT_SOURCE_DIR}/bigzero-zip.zip cat 0 > bigzero.zip
-  DEPENDS ziptool ${CMAKE_CURRENT_SOURCE_DIR}/manyfiles-zip.zip ${CMAKE_CURRENT_SOURCE_DIR}/bigzero-zip.zip
+  COMMAND cmake -E tar x ${CMAKE_CURRENT_SOURCE_DIR}/manyfiles-zip.zip
+  COMMAND cmake -E tar x ${CMAKE_CURRENT_SOURCE_DIR}/bigzero-zip.zip
+  DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/manyfiles-zip.zip ${CMAKE_CURRENT_SOURCE_DIR}/bigzero-zip.zip
 )
 
 SET_PROPERTY(DIRECTORY PROPERTY ADDITIONAL_MAKE_CLEAN_FILES
@@ -209,8 +201,6 @@ FOREACH(CASE ${EXTRA_TESTS})
   SET_TESTS_PROPERTIES(${CASE} PROPERTIES SKIP_RETURN_CODE 77)
 ENDFOREACH()
 
-INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR}/../lib
-	${CMAKE_CURRENT_SOURCE_DIR}/../src
-	${CMAKE_CURRENT_BINARY_DIR}/..)
+INCLUDE_DIRECTORIES(BEFORE ${CMAKE_CURRENT_SOURCE_DIR}/../lib ${CMAKE_CURRENT_SOURCE_DIR}/../src ${CMAKE_CURRENT_BINARY_DIR}/..)
 
 ADD_CUSTOM_TARGET(check COMMAND ${CMAKE_CTEST_COMMAND})

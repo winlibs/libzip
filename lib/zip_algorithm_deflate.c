@@ -1,6 +1,6 @@
 /*
   zip_algorithm_deflate.c -- deflate (de)compression routines
-  Copyright (C) 2017 Dieter Baron and Thomas Klausner
+  Copyright (C) 2017-2018 Dieter Baron and Thomas Klausner
 
   This file is part of libzip, a library to manipulate ZIP archives.
   The authors can be contacted at <libzip@nih.at>
@@ -157,7 +157,8 @@ end(void *ud) {
 }
 
 
-static bool input(void *ud, zip_uint8_t *data, zip_uint64_t length) {
+static bool
+input(void *ud, zip_uint8_t *data, zip_uint64_t length) {
     struct ctx *ctx = (struct ctx *)ud;
 
     if (length > UINT_MAX || ctx->zstr.avail_in > 0) {
@@ -172,7 +173,8 @@ static bool input(void *ud, zip_uint8_t *data, zip_uint64_t length) {
 }
 
 
-static void end_of_input(void *ud) {
+static void
+end_of_input(void *ud) {
     struct ctx *ctx = (struct ctx *)ud;
 
     ctx->end_of_input = true;
@@ -217,6 +219,7 @@ process(void *ud, zip_uint8_t *data, zip_uint64_t *length) {
     }
 }
 
+// clang-format off
 
 zip_compression_algorithm_t zip_algorithm_deflate_compress = {
     compress_allocate,
@@ -240,3 +243,5 @@ zip_compression_algorithm_t zip_algorithm_deflate_decompress = {
     end_of_input,
     process
 };
+
+// clang-format on
