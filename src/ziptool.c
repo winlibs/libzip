@@ -1,6 +1,6 @@
 /*
   ziptool.c -- tool for modifying zip archive in multiple ways
-  Copyright (C) 2012-2019 Dieter Baron and Thomas Klausner
+  Copyright (C) 2012-2020 Dieter Baron and Thomas Klausner
 
   This file is part of libzip, a library to manipulate ZIP archives.
   The authors can be contacted at <libzip@nih.at>
@@ -37,6 +37,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
+#include <time.h>
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
@@ -386,9 +387,17 @@ name_locate(int argc, char *argv[]) {
     return 0;
 }
 
+struct progress_userdata_s {
+  double percentage;
+  double limit;
+};
+
+struct progress_userdata_s progress_userdata;
+
 static void
 progress_callback(zip_t *archive, double percentage, void *ud) {
     printf("%.1lf%% done\n", percentage * 100);
+    progress_userdata.percentage = percentage;
 }
 
 static int
@@ -496,6 +505,22 @@ set_file_encryption(int argc, char *argv[]) {
 }
 
 static int
+set_file_dostime(int argc, char *argv[]) {
+    /* set file last modification time (mtime) directly */
+    time_t mtime;
+    zip_uint16_t dostime, dosdate;
+    zip_uint64_t idx;
+    idx = strtoull(argv[0], NULL, 10);
+    dostime = (time_t)strtoull(argv[1], NULL, 10);
+    dosdate = (time_t)strtoull(argv[2], NULL, 10);
+    if (zip_file_set_dostime(za, idx, dostime, dosdate, 0) < 0) {
+	fprintf(stderr, "can't set file dostime at index '%" PRIu64 "' to '%d'/'%d': %s\n", idx, (int)dostime, (int)dosdate, zip_strerror(za));
+	return -1;
+    }
+    return 0;
+}
+
+static int
 set_file_mtime(int argc, char *argv[]) {
     /* set file last modification time (mtime) */
     time_t mtime;
@@ -503,7 +528,7 @@ set_file_mtime(int argc, char *argv[]) {
     idx = strtoull(argv[0], NULL, 10);
     mtime = (time_t)strtoull(argv[1], NULL, 10);
     if (zip_file_set_mtime(za, idx, mtime, 0) < 0) {
-	fprintf(stderr, "can't set file mtime at index '%" PRIu64 "' to '%ld': %s\n", idx, mtime, zip_strerror(za));
+	fprintf(stderr, "can't set file mtime at index '%" PRIu64 "' to '%lld': %s\n", idx, (long long)mtime, zip_strerror(za));
 	return -1;
     }
     return 0;
@@ -523,7 +548,7 @@ set_file_mtime_all(int argc, char *argv[]) {
     }
     for (idx = 0; idx < (zip_uint64_t)num_entries; idx++) {
 	if (zip_file_set_mtime(za, idx, mtime, 0) < 0) {
-	    fprintf(stderr, "can't set file mtime at index '%" PRIu64 "' to '%ld': %s\n", idx, mtime, zip_strerror(za));
+	    fprintf(stderr, "can't set file mtime at index '%" PRIu64 "' to '%lld': %s\n", idx, (long long)mtime, zip_strerror(za));
 	    return -1;
 	}
     }
@@ -562,7 +587,12 @@ zstat(int argc, char *argv[]) {
 	printf("compressed size: '%" PRIu64 "'\n", sb.comp_size);
     if (sb.valid & ZIP_STAT_MTIME) {
 	struct tm *tpm;
+#ifdef HAVE_LOCALTIME_R
+	struct tm tm;
+	tpm = localtime_r(&sb.mtime, &tm);
+#else
 	tpm = localtime(&sb.mtime);
+#endif
 	if (tpm == NULL) {
 	    printf("mtime: <not valid>\n");
 	} else {
@@ -610,6 +640,19 @@ get_compression_method(const char *arg) {
 #if defined(HAVE_LIBBZ2)
     else if (strcmp(arg, "bzip2") == 0)
 	return ZIP_CM_BZIP2;
+#endif
+#if defined(HAVE_LIBLZMA)
+/*  Disabled - because 7z isn't able to unpack ZIP+LZMA ZIP+LZMA2
+    archives made this way - and vice versa.
+
+    else if (strcmp(arg, "lzma") == 0)
+      return ZIP_CM_LZMA;
+    else if (strcmp(arg, "lzma2") == 0)
+      return ZIP_CM_LZMA2;
+*/
+    else if (strcmp(arg, "xz") == 0)
+      return ZIP_CM_XZ;
+
 #endif
     else if (strcmp(arg, "unknown") == 0)
 	return 100;
@@ -702,6 +745,7 @@ dispatch_table_t dispatch_table[] = {{"add", 2, "name content", "add file called
 				     {"set_extra", 5, "index extra_id extra_index flags value", "set extra field", set_extra},
 				     {"set_file_comment", 2, "index comment", "set file comment", set_file_comment},
 				     {"set_file_compression", 3, "index method compression_flags", "set file compression method", set_file_compression},
+				     {"set_file_dostime", 3, "index time date", "set file modification time and date (DOS format)", set_file_dostime},
 				     {"set_file_encryption", 3, "index method password", "set file encryption method", set_file_encryption},
 				     {"set_file_mtime", 2, "index timestamp", "set file modification time", set_file_mtime},
 				     {"set_file_mtime_all", 1, "timestamp", "set file modification time for all files", set_file_mtime_all},

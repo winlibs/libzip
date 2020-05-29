@@ -1,3 +1,18 @@
+1.6.1 [2020-02-03]
+==================
+
+* Bugfix for double-free in zipcmp(1) during cleanup.
+
+1.6.0 [2020-01-24]
+==================
+
+* Avoid using umask() since it's not thread-safe.
+* Set close-on-exec flag when opening files.
+* Do not accept empty files as valid zip archives any longer.
+* Add support for XZ compressed files (using liblzma).
+* Add support for cancelling while closing zip archives.
+* Add support for setting the time in the on-disk format.
+
 1.5.2 [2019-03-12]
 ==================
 * Fix bug in AES encryption affecting certain file sizes
