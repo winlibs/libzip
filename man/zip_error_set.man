@@ -30,7 +30,7 @@
 .\" OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
 .\" IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.TH "ZIP_ERROR_SET" "3" "December 18, 2017" "NiH" "Library Functions Manual"
+.TH "ZIP_ERROR_SET" "3" "April 2, 2020" "NiH" "Library Functions Manual"
 .nh
 .if n .ad l
 .SH "NAME"
@@ -59,7 +59,7 @@ and the system error code
 .PP
 \fIze\fR
 must be allocated and initialized with
-zip_error_fini(3)
+zip_error_init(3)
 before calling
 \fBzip_error\fR(\fIset\fR).
 .SH "SEE ALSO"

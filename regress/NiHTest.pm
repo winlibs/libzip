@@ -79,12 +79,6 @@ use UNIVERSAL;
 #	mkdir MODE NAME
 #	    create directory NAME with permissions MODE.
 #
-#	pipefile FILE
-#	    pipe FILE to program's stdin.
-#
-#	pipein COMMAND ARGS ...
-#	    pipe output of running COMMAND to program's stdin.
-#
 #   precheck COMMAND ARGS ...
 #		if COMMAND exits with non-zero status, skip test.
 #
@@ -107,6 +101,12 @@ use UNIVERSAL;
 #
 #       stderr-replace REGEX REPLACEMENT
 #           run regex replacement over expected and got stderr output.
+#
+#	stdin TEST
+#	    Provide TEXT to program's stdin.
+#
+#	stdin-file FILE
+#	    pipe FILE to program's stdin.
 #
 #	stdout TEXT
 #	    program is expected to print TEXT to stdout.  If multiple
@@ -161,8 +161,6 @@ sub new {
 		'file-del' => { type => 'string string' },
 		'file-new' => { type => 'string string' },
 		mkdir => { type => 'string string' },
-		pipefile => { type => 'string', once => 1 },
-		pipein => { type => 'string', once => 1 },
 		precheck => { type => 'string...' },
 		preload => { type => 'string', once => 1 },
 		program => { type => 'string', once => 1 },
@@ -170,6 +168,8 @@ sub new {
 		setenv => { type => 'string string' },
 		stderr => { type => 'string' },
 		'stderr-replace' => { type => 'string string' },
+		stdin => { type => 'string' },
+		'stdin-file' => { type => 'string', once => 1 },
 		stdout => { type => 'string' },
 		touch => { type => 'int string' },
 		ulimit => { type => 'char string' }
@@ -361,6 +361,10 @@ sub runtest_one {
 		delete ${ENV{$preload_env_var}};
 	}
 
+	if ($self->{test}->{stdin}) {
+		$self->{stdin} = [ @{$self->{test}->{stdin}} ];
+	}
+
 	if ($self->{test}->{stdout}) {
 		$self->{expected_stdout} = [ @{$self->{test}->{stdout}} ];
 	}
@@ -451,8 +455,8 @@ sub setup {
 	$self->check_features_requirement() if ($self->{test}->{features});
 	$self->run_precheck() if ($self->{test}->{precheck});
 
-	$self->end_test('SKIP') if ($self->{test}->{preload} && $^O eq 'darwin');
-	$self->end_test('SKIP') if (($self->{test}->{pipein} || $self->{test}->{pipefile}) && $^O eq 'MSWin32');
+	$self->end_test('SKIP') if ($self->{test}->{preload} && ($^O eq 'darwin' || $^O eq 'MSWin32'));
+	$self->end_test('SKIP') if ($self->{test}->{stdin} || $self->{test}->{'stdin-file'} && $^O eq 'MSWin32');
 }
 
 
@@ -785,7 +789,7 @@ sub get_variable {
 		}
 		close ($fh);
 	}
-	if (!defined($self->{$name} || $self->{$name} eq '')) {
+	if (!defined($self->{$name}) || $self->{$name} eq '') {
 		$self->die("cannot get variable $name");
 	}
 }
@@ -952,8 +956,8 @@ sub parse_case() {
 		}
 	}
 
-	if ($test{pipefile} && $test{pipein}) {
-		$self->warn_file("both pipefile and pipein set, choose one");
+	if ($test{'stdin-file'} && $test{stdin}) {
+		$self->warn_file("both stdin-file and stdin provided, choose one");
 		$ok = 0;
 	}
 
@@ -1163,7 +1167,6 @@ sub find_program() {
 
 sub run_program {
 	my ($self) = @_;
-	goto &pipein_win32 if (($^O eq 'MSWin32') or ($^O eq 'msys')) && $self->{test}->{pipein};
 	my ($stdin, $stdout, $stderr);
 	$stderr = gensym;
 
@@ -1172,8 +1175,8 @@ sub run_program {
 	### TODO: catch errors?
 
 	my $pid;
-        if ($self->{test}->{pipefile}) {
-                open(SPLAT, '<', $self->{test}->{pipefile});
+        if ($self->{test}->{'stdin-file'}) {
+                open(SPLAT, '<', $self->{test}->{'stdin-file'});
 	        my $is_marked = eof SPLAT; # mark used
 		$pid = open3("<&SPLAT", $stdout, $stderr, @cmd);
 	}
@@ -1183,16 +1186,10 @@ sub run_program {
 	$self->{stdout} = [];
 	$self->{stderr} = [];
 
-	if ($self->{test}->{pipein}) {
-                my $fh;
-                open($fh, "$self->{test}->{pipein} |");
-                if (!defined($fh)) {
-                        $self->die("cannot run pipein command [$self->{test}->{pipein}: $!");
+	if ($self->{test}->{stdin}) {
+		foreach my $line (@{$self->{test}->{stdin}}) {
+                        print $stdin $line . "\n";
                 }
-                while (my $line = <$fh>) {
-                        print $stdin $line;
-                }
-                close($fh);
                 close($stdin);
         }
 
@@ -1214,42 +1211,6 @@ sub run_program {
 	waitpid($pid, 0);
 
 	$self->{exit_status} = $? >> 8;
-}
-
-sub pipein_win32() {
-	my ($self) = @_;
-
-	# TODO this is currently broken, IPC::Cmd::run fails to load
-	my $program = $self->find_program($self->{test}->{program});
-	my $cmd = "$self->{test}->{pipein} | $program " . join(' ', map ({ args_decode($_, $self->{srcdir}); } @{$self->{test}->{args}}));
-	my ($success, $error_message, $full_buf, $stdout_buf, $stderr_buf) = IPC::Cmd::run(command => $cmd);
-	if (!$success) {
-		### TODO: catch errors?
-	}
-
-	my @stdout = map { s/[\r\n]+$// } @$stdout_buf;
-	$self->{stdout} = \@stdout;
-        $self->{stderr} = [];
-
-	my $prg = $self->{test}->{program};
-	$prg =~ s,.*/,,;
-	foreach my $line (@$stderr_buf) {
-		$line =~ s/[\r\n]+$//;
-
-		$line =~ s/^[^: ]*$prg(\.exe)?: //;
-		if (defined($self->{test}->{'stderr-replace'})) {
-			$line = $self->stderr_rewrite($self->{test}->{'stderr-replace'}, $line);
-		}
-		push @{$self->{stderr}}, $line;
-	}
-
-	$self->{exit_status} = 1;
-	if ($success) {
-		$self->{exit_status} = 0;
-	}
-	elsif ($error_message =~ /exited with value ([0-9]+)$/) {
-		$self->{exit_status} = $1 + 0;
-	}
 }
 
 sub sandbox_create {

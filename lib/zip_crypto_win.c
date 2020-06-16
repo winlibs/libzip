@@ -40,6 +40,7 @@
 #define NOCRYPT
 
 #include <windows.h>
+
 #include <bcrypt.h>
 
 #pragma comment(lib, "bcrypt.lib")
@@ -216,7 +217,7 @@ hmacCalculate(PRF_CTX *pContext, PUCHAR pbData, DWORD cbData, PUCHAR pbDigest) {
 }
 
 static void
-xor(LPBYTE ptr1, LPBYTE ptr2, DWORD dwLen) {
+myxor(LPBYTE ptr1, LPBYTE ptr2, DWORD dwLen) {
     while (dwLen--)
 	*ptr1++ ^= *ptr2++;
 }
@@ -250,7 +251,7 @@ pbkdf2(PUCHAR pbPassword, ULONG cbPassword, PUCHAR pbSalt, ULONG cbSalt, DWORD c
 	ZeroMemory(Ti, DIGEST_SIZE);
 	for (j = 0; j < cIterations; j++) {
 	    if (j == 0) {
-		// construct first input for PRF
+		/* construct first input for PRF */
 		memcpy(U, pbSalt, cbSalt);
 		U[cbSalt] = (BYTE)((i & 0xFF000000) >> 24);
 		U[cbSalt + 1] = (BYTE)((i & 0x00FF0000) >> 16);
@@ -267,14 +268,14 @@ pbkdf2(PUCHAR pbPassword, ULONG cbPassword, PUCHAR pbSalt, ULONG cbSalt, DWORD c
 		goto PBKDF2_end;
 	    }
 
-	    xor(Ti, V, DIGEST_SIZE);
+	    myxor(Ti, V, DIGEST_SIZE);
 	}
 
 	if (i != l) {
 	    memcpy(&pbDerivedKey[(i - 1) * DIGEST_SIZE], Ti, DIGEST_SIZE);
 	}
 	else {
-	    // Take only the first r bytes
+	    /* Take only the first r bytes */
 	    memcpy(&pbDerivedKey[(i - 1) * DIGEST_SIZE], Ti, r);
 	}
     }
@@ -382,7 +383,7 @@ struct _zip_crypto_hmac_s {
     PUCHAR pbHash;
 };
 
-// https://code.msdn.microsoft.com/windowsdesktop/Hmac-Computation-Sample-11fe8ec1/sourcecode?fileId=42820&pathId=283874677
+/* https://code.msdn.microsoft.com/windowsdesktop/Hmac-Computation-Sample-11fe8ec1/sourcecode?fileId=42820&pathId=283874677 */
 
 _zip_crypto_hmac_t *
 _zip_crypto_hmac_new(const zip_uint8_t *secret, zip_uint64_t secret_length, zip_error_t *error) {

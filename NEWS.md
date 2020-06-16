@@ -1,12 +1,30 @@
+1.7.1 [2020-06-13]
+==================
+
+* Restore `LIBZIP_VERSION_{MAJOR,MINOR,MICRO}` symbols.
+* Fixes warnings reported by PVS-Studio.
+* Add `LIBZIP_DO_INSTALL` build setting to make it easier to use
+  libzip as subproject.
+
+1.7.0 [2020-06-05]
+==================
+
+* Add support for encrypting using traditional PKWare encryption.
+* Add `zip_compression_method_supported()`.
+* Add `zip_encryption_method_supported()`.
+* Add the `ZIP_SOURCE_GET_FILE_ATTRIBUTES` source command.
+* Refactor stdio file backend.
+* Add CMake find_project() support.
+
 1.6.1 [2020-02-03]
 ==================
 
-* Bugfix for double-free in zipcmp(1) during cleanup.
+* Bugfix for double-free in `zipcmp(1)` during cleanup.
 
 1.6.0 [2020-01-24]
 ==================
 
-* Avoid using umask() since it's not thread-safe.
+* Avoid using `umask()` since it's not thread-safe.
 * Set close-on-exec flag when opening files.
 * Do not accept empty files as valid zip archives any longer.
 * Add support for XZ compressed files (using liblzma).
@@ -15,6 +33,7 @@
 
 1.5.2 [2019-03-12]
 ==================
+
 * Fix bug in AES encryption affecting certain file sizes
 * Keep file permissions when modifying zip archives
 * Support systems with small stack size.
@@ -52,6 +71,7 @@
 
 1.3.2 [2017-11-20]
 ==================
+
 * Fix bug introduced in last: zip_t was erroneously freed if zip_close() failed.
 
 1.3.1 [2017-11-19]
@@ -196,7 +216,7 @@
 0.9 [2008-07-25]
 ==================
 
-* on Windows, explictly set dllimport/dllexport
+* on Windows, explicitly set dllimport/dllexport
 * remove erroneous references to GPL
 * add support for torrentzip
 * new functions: zip_get_archive_flag, zip_set_archive_flag

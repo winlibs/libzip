@@ -42,9 +42,6 @@
 #ifdef HAVE_STRINGS_H
 #include <strings.h>
 #endif
-#ifdef HAVE_UNISTD_H
-#include <unistd.h>
-#endif
 #ifdef HAVE_FTS_H
 #include <fts.h>
 #endif
@@ -54,8 +51,9 @@
 #include "getopt.h"
 #endif
 
-#include "compat.h"
 #include "zip.h"
+
+#include "compat.h"
 
 struct archive {
     const char *name;
@@ -233,8 +231,8 @@ compare_zip(char *const zn[]) {
     if (paranoid) {
 	if (comment_compare(a[0].comment, a[0].comment_length, a[1].comment, a[1].comment_length) != 0) {
 	    if (verbose) {
-		printf("--- archive comment (%zd)\n", a[0].comment_length);
-		printf("+++ archive comment (%zd)\n", a[1].comment_length);
+		printf("--- archive comment (%zu)\n", a[0].comment_length);
+		printf("+++ archive comment (%zu)\n", a[1].comment_length);
 	    }
 	    res = 1;
 	}
@@ -273,7 +271,7 @@ compute_crc(const char *fname) {
     Bytef buffer[8192];
 
 
-    if ((f = fopen(fname, "r")) == NULL) {
+    if ((f = fopen(fname, "rb")) == NULL) {
 	fprintf(stderr, "%s: can't open %s: %s\n", progname, fname, strerror(errno));
 	return -1;
     }
@@ -644,9 +642,9 @@ entry_paranoia_checks(char *const name[2], const void *p1, const void *p2) {
 		header_done = 1;
 	    }
 	    printf("---                     %s  ", e1->name);
-	    printf("comment %d\n", e1->comment_length);
+	    printf("comment %" PRIu32 "\n", e1->comment_length);
 	    printf("+++                     %s  ", e1->name);
-	    printf("comment %d\n", e2->comment_length);
+	    printf("comment %" PRIu32 "\n", e2->comment_length);
 	}
 	ret = 1;
     }

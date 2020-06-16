@@ -83,9 +83,6 @@ typedef char bool;
 #endif
 
 #ifdef _WIN32
-#if defined(HAVE__CHMOD)
-#define chmod _chmod
-#endif
 #if defined(HAVE__CLOSE)
 #define close _close
 #endif
@@ -98,10 +95,6 @@ typedef char bool;
 #endif
 #if !defined(HAVE_FILENO) && defined(HAVE__FILENO)
 #define fileno _fileno
-#endif
-/* Windows' open() doesn't understand Unix permissions */
-#if defined(HAVE__OPEN)
-#define open(a, b, c) _open((a), (b))
 #endif
 #if defined(HAVE__SNPRINTF)
 #define snprintf _snprintf

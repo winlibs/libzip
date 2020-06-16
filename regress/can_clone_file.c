@@ -31,10 +31,7 @@
  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <errno.h>
-#include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 
 #include "config.h"
 
@@ -42,10 +39,16 @@
 #include <sys/attr.h>
 #include <sys/mount.h>
 #include <sys/param.h>
+#include <errno.h>
+#include <stdio.h>
+#include <string.h>
 #include <unistd.h>
 #elif defined(HAVE_FICLONERANGE)
 #include <linux/fs.h>
 #include <sys/ioctl.h>
+#include <errno.h>
+#include <stdio.h>
+#include <string.h>
 #include <unistd.h>
 #endif
 

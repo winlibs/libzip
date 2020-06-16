@@ -1,5 +1,7 @@
 #include "zip.h"
 
+#include <sys/stat.h>
+
 #define ZIP_MIN(a, b) ((a) < (b) ? (a) : (b))
 
 #define FOR_REGRESS
@@ -108,7 +110,7 @@ zin_close(int argc, char *argv[]) {
 
     idx = strtoull(argv[0], NULL, 10);
     if (idx >= z_in_count) {
-	fprintf(stderr, "invalid argument '%" PRIu64 "', only %d zip sources open\n", idx, z_in_count);
+	fprintf(stderr, "invalid argument '%" PRIu64 "', only %u zip sources open\n", idx, z_in_count);
 	return -1;
     }
     if (zip_close(z_in[idx]) < 0) {
@@ -151,7 +153,7 @@ read_to_memory(const char *archive, int flags, zip_error_t *error, zip_source_t 
 	return NULL;
     }
 
-    if ((fp = fopen(archive, "r")) == NULL) {
+    if ((fp = fopen(archive, "rb")) == NULL) {
 	if (errno == ENOENT) {
 	    src = zip_source_buffer_create(NULL, 0, 0, error);
 	}

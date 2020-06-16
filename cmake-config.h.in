@@ -5,12 +5,10 @@
 #endif
 /* BEGIN DEFINES */
 #cmakedefine HAVE___PROGNAME
-#cmakedefine HAVE__CHMOD
 #cmakedefine HAVE__CLOSE
 #cmakedefine HAVE__DUP
 #cmakedefine HAVE__FDOPEN
 #cmakedefine HAVE__FILENO
-#cmakedefine HAVE__OPEN
 #cmakedefine HAVE__SETMODE
 #cmakedefine HAVE__SNPRINTF
 #cmakedefine HAVE__STRDUP
@@ -35,7 +33,6 @@
 #cmakedefine HAVE_MBEDTLS
 #cmakedefine HAVE_MKSTEMP
 #cmakedefine HAVE_NULLABLE
-#cmakedefine HAVE_OPEN
 #cmakedefine HAVE_OPENSSL
 #cmakedefine HAVE_SETMODE
 #cmakedefine HAVE_SNPRINTF
@@ -77,8 +74,8 @@
 #cmakedefine WORDS_BIGENDIAN
 #cmakedefine HAVE_SHARED
 /* END DEFINES */
-#define PACKAGE "@PACKAGE@"
-#define VERSION "@VERSION@"
+#define PACKAGE "@CMAKE_PROJECT_NAME@"
+#define VERSION "@CMAKE_PROJECT_VERSION@"
 
 #ifndef HAVE_SSIZE_T_LIBZIP
 #  if SIZE_T_LIBZIP == INT_LIBZIP
