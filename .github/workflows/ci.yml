@@ -1,0 +1,29 @@
+name: Build libzip
+on: [push]
+jobs:
+  build:
+    strategy:
+      matrix:
+          vs: [vs16]
+          arch: [x86]
+    runs-on: windows-2019
+    steps:
+      - name: Checkout libzip
+        uses: actions/checkout@v2
+      - uses: ilammy/msvc-dev-cmd@v1
+        if: ${{matrix.vs == 'vc15'}}
+        with:
+          arch: ${{matrix.arch}}
+          toolset: 14.16
+      - uses: ilammy/msvc-dev-cmd@v1
+        if: ${{matrix.vs == 'vs16'}}
+        with:
+          arch: ${{matrix.arch}}
+          toolset: 14.29
+      - run: ./.github/workflows/build.ps1 -vs ${{matrix.vs}} -arch ${{matrix.arch}}
+      - run: tree /a build
+        shell: cmd
+      # - uses: actions/upload-artifact@v2
+      #   with:
+      #     name: libzip-${{matrix.vs}}-${{matrix.arch}}
+      #     path: ./winlib_build/
