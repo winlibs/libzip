@@ -21,5 +21,5 @@ Expand-Archive $temp -DestinationPath "winlib_deps"
 
 New-Item "build" -ItemType "directory"
 Set-Location "build"
-cmake -G "NMake Makefiles" "-DZLIB_INCLUDE_DIR=..\winlib_deps\include" "-DZLIB_LIBRARY=..\winlibs_deps\lib\zlib_a.lib" "-DBZIP2_INCLUDE_DIR=..\winlibs_deps\include" "-DBZIP2_LIBRARIES=..\winlibs_deps\lib\libbz2_a.lib" "-DLIBLZMA_INCLUDE_DIR=..\winlibs_deps\include" "-DLIBLZMA_LIBRARY=..\winlibs_deps\lib\liblzma_a.lib" "-DBUILD_REGRESS=OFF" ".."
+cmake -G "NMake Makefiles" "-DZLIB_INCLUDE_DIR=..\winlib_deps\include" "-DZLIB_LIBRARY=..\winlibs_deps\lib\zlib_a.lib" "-DBZIP2_INCLUDE_DIR=..\winlibs_deps\include" "-DBZIP2_LIBRARIES=..\winlibs_deps\lib\libbz2_a.lib" "-DLIBLZMA_INCLUDE_DIR=..\winlibs_deps\include" "-DLIBLZMA_LIBRARY=..\winlibs_deps\lib\liblzma_a.lib" "-DBUILD_TOOLS=OFF" "-DBUILD_REGRESS=OFF" "-DBUILD_EXAMPLES=OFF" "-DBUILD_DOC=OFF" ".."
 nmake
