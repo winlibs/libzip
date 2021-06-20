@@ -12,7 +12,7 @@ Invoke-WebRequest "https://windows.php.net/downloads/php-sdk/deps/$vs/$arch/libb
 Expand-Archive $temp -DestinationPath "winlib_deps"
 
 $temp = New-TemporaryFile | Rename-Item -NewName {$_.Name + ".zip"} -PassThru
-Invoke-WebRequest "https://windows.php.net/downloads/php-sdk/deps/$vs/$arch/liblzma-5.2.5-$vs-$arch.zip" -OutFile $temp
+Invoke-WebRequest "https://windows.php.net/downloads/php-sdk/deps/$vs/$arch/liblzma-5.2.5-1-$vs-$arch.zip" -OutFile $temp
 Expand-Archive $temp -DestinationPath "winlib_deps"
 
 $temp = New-TemporaryFile | Rename-Item -NewName {$_.Name + ".zip"} -PassThru
