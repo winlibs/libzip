@@ -21,7 +21,7 @@ jobs:
           arch: ${{matrix.arch}}
           toolset: 14.29
       - run: ./.github/workflows/build.ps1 -vs ${{matrix.vs}} -arch ${{matrix.arch}}
-      - run: dir build\lib
+      - run: tree /a /f winlib_build
         shell: cmd
       # - uses: actions/upload-artifact@v2
       #   with:
