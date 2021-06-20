@@ -12,7 +12,7 @@ Invoke-WebRequest "https://windows.php.net/downloads/php-sdk/deps/$vs/$arch/libb
 Expand-Archive $temp -DestinationPath "winlib_deps"
 
 $temp = New-TemporaryFile | Rename-Item -NewName {$_.Name + ".zip"} -PassThru
-Invoke-WebRequest "https://windows.php.net/downloads/php-sdk/deps/$vs/$arch/liblzma-5.2.5-1-$vs-$arch.zip" -OutFile $temp
+Invoke-WebRequest "https://windows.php.net/downloads/php-sdk/deps/$vs/$arch/liblzma-5.2.5-$vs-$arch.zip" -OutFile $temp
 Expand-Archive $temp -DestinationPath "winlib_deps"
 
 $temp = New-TemporaryFile | Rename-Item -NewName {$_.Name + ".zip"} -PassThru
@@ -24,5 +24,5 @@ Set-Location "build"
 cmake -G "NMake Makefiles" "-DCMAKE_BUILD_TYPE=RelWithDebInfo" "-DZLIB_INCLUDE_DIR=..\winlib_deps\include" "-DZLIB_LIBRARY=..\winlibs_deps\lib\zlib_a.lib" "-DBZIP2_INCLUDE_DIR=..\winlibs_deps\include" "-DBZIP2_LIBRARIES=..\winlibs_deps\lib\libbz2_a.lib" "-DLIBLZMA_INCLUDE_DIR=..\winlibs_deps\include" "-DLIBLZMA_LIBRARY=..\winlibs_deps\lib\liblzma_a.lib" "-DBUILD_TOOLS=OFF" "-DBUILD_REGRESS=OFF" "-DBUILD_EXAMPLES=OFF" "-DBUILD_DOC=OFF" ".."
 cmake --build "."
 cmake --install "." --prefix "..\winlib_build"
-Remove-Item "..\winlib_build\lib\cmake"
-Remove-Item "..\winlib_build\lib\pkgconfig"
+Remove-Item "..\winlib_build\lib\cmake" -Recurse
+Remove-Item "..\winlib_build\lib\pkgconfig" -Recurse
