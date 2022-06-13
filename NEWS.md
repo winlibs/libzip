@@ -1,3 +1,30 @@
+1.8.0 [2021-06-18]
+==================
+
+* Add support for zstd (Zstandard) compression.
+* Add support for lzma (ID 14) compression.
+* Add `zip_source_window_create()`.
+* Add `zip_source_zip_create()` variant to `zip_source_zip()`.
+* Allow method specific `comp_flags` in `zip_set_file_compression()`.
+* Allow `zip_source_tell()` on sources that don't support seeking and `zip_ftell()` on compressed data.
+* Provide more details for consistency check errors.
+* Improve output of `zipcmp`.
+* In `zipcmp`, don’t ignore empty directories when comparing directory listing.
+* Treat empty string as no password given in `zip_file_set_encryption()`, `zip_fopen_encrypted()`, and `zip_set_default_password()`.
+
+1.7.3 [2020-07-15]
+==================
+
+* Support cmake < 3.17 again.
+* Fix pkgconfig file (regression in 1.7.2).
+
+1.7.2 [2020-07-11]
+==================
+
+* Fixes for the CMake `find_project()` files.
+* libzip moved to the CMake `libzip::` `NAMESPACE`.
+* CMake usage best practice cleanups.
+
 1.7.1 [2020-06-13]
 ==================
 

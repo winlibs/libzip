@@ -1,6 +1,6 @@
 /*
   tryopen.c -- tool for tests that try opening zip archives
-  Copyright (C) 1999-2019 Dieter Baron and Thomas Klausner
+  Copyright (C) 1999-2021 Dieter Baron and Thomas Klausner
 
   This file is part of libzip, a library to manipulate ZIP archives.
   The authors can be contacted at <libzip@nih.at>
@@ -41,11 +41,12 @@
 #endif
 
 #include "zip.h"
-#define TRYOPEN_USAGE "usage: %s [-cent] file\n\n" \
-		      "\t-c\tcheck consistency\n" \
-		      "\t-e\texclusively open archive\n" \
-		      "\t-n\tcreate new file\n" \
-		      "\t-t\ttruncate file to size 0\n"
+#define TRYOPEN_USAGE                  \
+    "usage: %s [-cent] file\n\n"       \
+    "\t-c\tcheck consistency\n"        \
+    "\t-e\texclusively open archive\n" \
+    "\t-n\tcreate new file\n"          \
+    "\t-t\ttruncate file to size 0\n"
 
 
 int
@@ -59,47 +60,54 @@ main(int argc, char *argv[]) {
     flags = 0;
 
     while ((c = getopt(argc, argv, "cent")) != -1) {
-	switch (c) {
-	case 'c':
-	    flags |= ZIP_CHECKCONS;
-	    break;
-	case 'e':
-	    flags |= ZIP_EXCL;
-	    break;
-	case 'n':
-	    flags |= ZIP_CREATE;
-	    break;
-	case 't':
-	    flags |= ZIP_TRUNCATE;
-	    break;
+        switch (c) {
+        case 'c':
+            flags |= ZIP_CHECKCONS;
+            break;
+        case 'e':
+            flags |= ZIP_EXCL;
+            break;
+        case 'n':
+            flags |= ZIP_CREATE;
+            break;
+        case 't':
+            flags |= ZIP_TRUNCATE;
+            break;
 
-	default:
-	    fprintf(stderr, TRYOPEN_USAGE, argv[0]);
-	    return 1;
-	}
+        default:
+            fprintf(stderr, TRYOPEN_USAGE, argv[0]);
+            return 1;
+        }
     }
 
     error = 0;
     for (; optind < argc; optind++) {
-	fname = argv[optind];
-	errno = 0;
+        fname = argv[optind];
+        errno = 0;
 
-	if ((z = zip_open(fname, flags, &ze)) != NULL) {
-	    count = zip_get_num_entries(z, 0);
-	    printf("opening '%s' succeeded, %" PRIu64 " entries\n", fname, count);
-	    zip_close(z);
-	    continue;
-	}
+        if ((z = zip_open(fname, flags, &ze)) != NULL) {
+            count = zip_get_num_entries(z, 0);
+            printf("opening '%s' succeeded, %" PRIu64 " entries\n", fname, count);
+            zip_close(z);
+            continue;
+        }
 
-	printf("opening '%s' returned error %d", fname, ze);
-	if (zip_error_get_sys_type(ze) == ZIP_ET_SYS)
-	    printf("/%d", errno);
-	printf("\n");
-	error++;
+        printf("opening '%s' returned error %d", fname, ze);
+        switch (zip_error_get_sys_type(ze)) {
+            case ZIP_ET_SYS:
+            case ZIP_ET_LIBZIP:
+                printf("/%d", errno);
+                break;
+                
+            default:
+                break;
+        }
+        printf("\n");
+        error++;
     }
 
     if (error > 0)
-	fprintf(stderr, "%d errors\n", error);
+        fprintf(stderr, "%d errors\n", error);
 
     return error ? 1 : 0;
 }

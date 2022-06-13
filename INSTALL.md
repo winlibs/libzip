@@ -8,14 +8,17 @@ comes with most operating systems.
 For supporting bzip2-compressed zip archives, you need
 [bzip2](http://bzip.org/).
 
-For supporting xz-compressed zip archives, you need
-[liblzma](https://tukaani.org/xz/) which is part of xz.
+For supporting lzma- and xz-compressed zip archives, you need
+[liblzma](https://tukaani.org/xz/) which is part of xz, at least version 5.2.
+
+For supporting zstd-compressed zip archives, you need
+[zstd](https://github.com/facebook/zstd/).
 
 For AES (encryption) support, you need one of these cryptographic libraries,
 listed in order of preference:
 
 - Apple's CommonCrypto (available on macOS and iOS)
-- [GnuTLS](https://www.gnutls.org/)
+- [GnuTLS](https://www.gnutls.org/) and [Nettle](https://www.lysator.liu.se/~nisse/nettle/) (at least nettle 3.0)
 - [mbed TLS](https://tls.mbed.org/)
 - [OpenSSL](https://www.openssl.org/) >= 1.0.
 - Microsoft Windows Cryptography Framework
@@ -39,7 +42,7 @@ Some useful parameters you can pass to `cmake` with `-Dparameter=value`:
 - `BUILD_SHARED_LIBS`: set to `ON` or `OFF` to enable/disable building
   of shared libraries, defaults to `ON`
 - `CMAKE_INSTALL_PREFIX`: for setting the installation path
-- `DOCUMENTATION_FORMAT`: choose one of 'man', 'mdoc', and 'html' for
+- `DOCUMENTATION_FORMAT`: choose one of `man`, `mdoc`, and `html` for
   the installed documentation (default: decided by cmake depending on
   available tools)
 - `LIBZIP_DO_INSTALL`: If you include libzip as a subproject, link it
@@ -63,4 +66,4 @@ will break in `zipcmp`.
 You can get verbose build output with by passing `VERBOSE=1` to
 `make`.
 
-You can also check the [cmake FAQ](https://cmake.org/Wiki/CMake_FAQ).
+You can also check the [cmake FAQ](https://gitlab.kitware.com/cmake/community/-/wikis/FAQ).

@@ -1,3 +1,7 @@
+## Before next release
+
+reconsider zip_source_zip (uncompressed data for whole file not easy to get)
+
 ## Prefixes
 
 For example for adding extractors for self-extracting zip archives.
@@ -8,7 +12,7 @@ const zip_uint8_t *zip_get_archive_prefix(struct zip *za, zip_uint64_t *lengthp)
 
 ## Compression
 
-* add lzma support
+* add lzma2 support
 * add deflate64 support (https://github.com/madler/zlib/blob/master/contrib/infback9/infback9.h)
 
 ## API Issues
@@ -21,6 +25,7 @@ const zip_uint8_t *zip_get_archive_prefix(struct zip *za, zip_uint64_t *lengthp)
 
 ## Features
 
+* add flag `ZIP_FL_SUPPORT_MULTIPLE_OPENS` and allow zip_fopen (perhaps other functions) on added/replaced files with such sources
 * add seek support for AES-encrypted files
 * consistently use `_zip_crypto_clear()` for passwords
 * support setting extra fields from `zip_source`
@@ -65,7 +70,6 @@ const zip_uint8_t *zip_get_archive_prefix(struct zip *za, zip_uint64_t *lengthp)
 
 ## Cleanup
 
-* drop _LIBZIP suffixes in cmake defines (no longer needed since they no longer appear in zipconf.h)
 * go over cdir parser and rename various offset/size variables to make it clearer
 * use bool
 * use `ZIP_SOURCE_SUPPORTS_{READABLE,SEEKABLE,WRITABLE}`
@@ -90,8 +94,7 @@ const zip_uint8_t *zip_get_archive_prefix(struct zip *za, zip_uint64_t *lengthp)
 * test different crypto backends with TravisCI.
 * improve man page formatting of tagged lists on webpage (`<dl>`)
 * rewrite `make_zip_errors.sh` in cmake
-* rewrite `make_zip_err_str.sh` in cmake
-* script to check if all exported symbols are marked with `ZIP_EXTERN`, add to make distcheck
+* script to check if all exported symbols are marked with `ZIP_EXTERN`, add to `make distcheck`
 
 ## macOS / iOS framework
 
@@ -99,6 +102,8 @@ const zip_uint8_t *zip_get_archive_prefix(struct zip *za, zip_uint64_t *lengthp)
 
 ## Test Case Issues
 
+* add test cases for all ZIP_INCONS detail errors
+* `incons-local-filename-short.zzip` doesn't test short filename, since extra fields fail to parse.
 * test error cases with special source
   - tell it which command should fail
   - use it both as source for `zip_add` and `zip_open_from_source`
@@ -122,8 +127,7 @@ const zip_uint8_t *zip_get_archive_prefix(struct zip *za, zip_uint64_t *lengthp)
   * support testing on macOS
 * add test cases for lots of files (including too many)
 * add test cases for holes (between files, between files and cdir, between cdir and eocd, + zip64 where appropriate)
-* unchange on added file
-* test seek in `zip_source_crc()`
+* test seek in `zip_source_crc_create()`
 * test cases for `set_extra*`, `delete_extra*`, `*extra_field*`
 * test cases for in memory archives
   * add
@@ -134,7 +138,6 @@ const zip_uint8_t *zip_get_archive_prefix(struct zip *za, zip_uint64_t *lengthp)
 * add test case to change values for newly added files (name, compression method, comment, mtime, . . .)
 * `zip_open()` file less than `EOCDLEN` bytes long
 * test calls against old API
-* run regression tests also from CMake framework
 * rename file to dir/ and vice versa (fails)
 * fix comment test to be newline insensitive
 * check if http://bugs.python.org/issue20078 provides ideas for new tests

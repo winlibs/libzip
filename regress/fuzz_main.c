@@ -4,8 +4,8 @@
 
 /* fuzz target entry point, works without libFuzzer */
 
-int main(int argc, char **argv)
-{
+int
+main(int argc, char **argv) {
     FILE *f;
     char *buf = NULL;
     long siz_buf;
@@ -27,10 +27,10 @@ int main(int argc, char **argv)
     rewind(f);
 
     if (siz_buf < 1) {
-	goto err;
+        goto err;
     }
 
-    buf = (char*)malloc(siz_buf);
+    buf = (char *)malloc(siz_buf);
     if (buf == NULL) {
         fprintf(stderr, "malloc() failed\n");
         goto err;
@@ -41,7 +41,7 @@ int main(int argc, char **argv)
         goto err;
     }
 
-    (void)LLVMFuzzerTestOneInput((uint8_t*)buf, siz_buf);
+    (void)LLVMFuzzerTestOneInput((uint8_t *)buf, siz_buf);
 
 err:
     free(buf);

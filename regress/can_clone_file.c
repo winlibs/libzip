@@ -1,6 +1,6 @@
 /*
  can_clone_file.c -- does the current filesystem support cloning
- Copyright (C) 1999-2019 Dieter Baron and Thomas Klausner
+ Copyright (C) 1999-2021 Dieter Baron and Thomas Klausner
 
  This file is part of libzip, a library to manipulate ZIP archives.
  The authors can be contacted at <libzip@nih.at>
@@ -36,19 +36,19 @@
 #include "config.h"
 
 #ifdef HAVE_CLONEFILE
+#include <errno.h>
+#include <stdio.h>
+#include <string.h>
 #include <sys/attr.h>
 #include <sys/mount.h>
 #include <sys/param.h>
-#include <errno.h>
-#include <stdio.h>
-#include <string.h>
 #include <unistd.h>
 #elif defined(HAVE_FICLONERANGE)
-#include <linux/fs.h>
-#include <sys/ioctl.h>
 #include <errno.h>
+#include <linux/fs.h>
 #include <stdio.h>
 #include <string.h>
+#include <sys/ioctl.h>
 #include <unistd.h>
 #endif
 
@@ -58,13 +58,13 @@ main(int argc, char *argv[]) {
     struct statfs fs;
     struct attrlist attribute_list;
     struct {
-	uint32_t size;
-	vol_capabilities_attr_t capabilities;
+        uint32_t size;
+        vol_capabilities_attr_t capabilities;
     } volume_attributes;
 
     if (statfs(".", &fs) < 0) {
-	fprintf(stderr, "%s: can't get mount point of current directory: %s\n", argv[0], strerror(errno));
-	exit(1);
+        fprintf(stderr, "%s: can't get mount point of current directory: %s\n", argv[0], strerror(errno));
+        exit(1);
     }
 
     /* Not all volumes support clonefile().  A volume can be tested for
@@ -78,12 +78,12 @@ main(int argc, char *argv[]) {
     memset(&volume_attributes, 0, sizeof(volume_attributes));
 
     if (getattrlist(fs.f_mntonname, &attribute_list, &volume_attributes, sizeof(volume_attributes), 0) < 0) {
-	fprintf(stderr, "%s: can't get volume capabilities of '%s': %s\n", argv[0], fs.f_mntonname, strerror(errno));
-	exit(1);
+        fprintf(stderr, "%s: can't get volume capabilities of '%s': %s\n", argv[0], fs.f_mntonname, strerror(errno));
+        exit(1);
     }
 
     if (volume_attributes.capabilities.capabilities[VOL_CAPABILITIES_INTERFACES] & VOL_CAP_INT_CLONE) {
-	exit(0);
+        exit(0);
     }
 #elif defined(HAVE_FICLONERANGE)
     char namea[32] = "a.fioclone.XXXXXX";
@@ -92,22 +92,22 @@ main(int argc, char *argv[]) {
     struct file_clone_range range;
 
     if ((fda = mkstemp(namea)) < 0) {
-	fprintf(stderr, "can't create temp file a: %s\n", strerror(errno));
-	exit(1);
+        fprintf(stderr, "can't create temp file a: %s\n", strerror(errno));
+        exit(1);
     }
     if ((fdb = mkstemp(nameb)) < 0) {
-	fprintf(stderr, "can't create temp file b: %s\n", strerror(errno));
-	(void)close(fda);
-	(void)remove(namea);
-	exit(1);
+        fprintf(stderr, "can't create temp file b: %s\n", strerror(errno));
+        (void)close(fda);
+        (void)remove(namea);
+        exit(1);
     }
     if (write(fda, "test\n", 5) < 0) {
-	fprintf(stderr, "can't write temp file a: %s\n", strerror(errno));
-	(void)close(fda);
-	(void)remove(namea);
-	close(fdb);
-	(void)remove(nameb);
-	exit(1);
+        fprintf(stderr, "can't write temp file a: %s\n", strerror(errno));
+        (void)close(fda);
+        (void)remove(namea);
+        close(fdb);
+        (void)remove(nameb);
+        exit(1);
     }
     range.src_fd = fda;
     range.src_offset = 0;
@@ -119,7 +119,7 @@ main(int argc, char *argv[]) {
     (void)remove(namea);
     (void)remove(nameb);
     if (ret >= 0) {
-	exit(0);
+        exit(0);
     }
 #endif
 

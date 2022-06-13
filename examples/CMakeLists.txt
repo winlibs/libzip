@@ -1,13 +1,3 @@
-CHECK_FUNCTION_EXISTS(getopt HAVE_GETOPT)
-IF(NOT HAVE_GETOPT)
-  SET(SRC_EXTRA_FILES ../src/getopt.c)
-INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/examples
-  ${PROJECT_SOURCE_DIR}/src)
-ENDIF(NOT HAVE_GETOPT)
-
-ADD_EXECUTABLE(in-memory in-memory.c)
-TARGET_LINK_LIBRARIES(in-memory zip)
-
-INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/lib
-	${PROJECT_SOURCE_DIR}/src
-	${PROJECT_BINARY_DIR})
+add_executable(in-memory in-memory.c)
+target_link_libraries(in-memory zip)
+target_include_directories(in-memory PRIVATE ${PROJECT_SOURCE_DIR}/lib ${PROJECT_BINARY_DIR})

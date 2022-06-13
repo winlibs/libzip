@@ -1,12 +1,8 @@
-INCLUDE(CheckFunctionExists)
+include(CheckFunctionExists)
 
-IF(LIBZIP_DO_INSTALL)
-  INSTALL(FILES zip.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
-ENDIF()
+set(CMAKE_C_VISIBILITY_PRESET hidden)
 
-SET(CMAKE_C_VISIBILITY_PRESET hidden)
-
-SET(LIBZIP_SOURCES
+add_library(zip
   zip_add.c
   zip_add_dir.c
   zip_add_entry.c
@@ -41,7 +37,6 @@ SET(LIBZIP_SOURCES
   zip_file_set_external_attributes.c
   zip_file_set_mtime.c
   zip_file_strerror.c
-  zip_filerange_crc.c
   zip_fopen.c
   zip_fopen_encrypted.c
   zip_fopen_index.c
@@ -116,111 +111,132 @@ SET(LIBZIP_SOURCES
   zip_unchange_archive.c
   zip_unchange_data.c
   zip_utf-8.c
-)
+  ${CMAKE_CURRENT_BINARY_DIR}/zip_err_str.c
+  )
+add_library(libzip::zip ALIAS zip)
 
-IF(WIN32)
-  SET(LIBZIP_OPSYS_FILES
+if(WIN32)
+  target_sources(zip PRIVATE
     zip_source_file_win32.c
     zip_source_file_win32_named.c
     zip_source_file_win32_utf16.c
     zip_source_file_win32_utf8.c
-  )
-  IF(CMAKE_SYSTEM_NAME MATCHES WindowsPhone OR CMAKE_SYSTEM_NAME MATCHES WindowsStore)
-    SET(LIBZIP_OPSYS_FILES "${LIBZIP_OPSYS_FILES}"
-      zip_random_uwp.c
     )
-  ELSE()
-    SET(LIBZIP_OPSYS_FILES "${LIBZIP_OPSYS_FILES}"
-      zip_source_file_win32_ansi.c
-      zip_random_win32.c
-    )
-  ENDIF()
-ELSE(WIN32)
-  SET(LIBZIP_OPSYS_FILES
+  if(CMAKE_SYSTEM_NAME MATCHES WindowsPhone OR CMAKE_SYSTEM_NAME MATCHES WindowsStore)
+    target_sources(zip PRIVATE zip_random_uwp.c)
+  else()
+    target_sources(zip PRIVATE zip_source_file_win32_ansi.c zip_random_win32.c)
+    target_link_libraries(zip PRIVATE advapi32)
+  endif()
+else(WIN32)
+  target_sources(zip PRIVATE
     zip_mkstempm.c
     zip_source_file_stdio_named.c
     zip_random_unix.c
+    )
+endif(WIN32)
+
+if(HAVE_LIBBZ2)
+  target_sources(zip PRIVATE zip_algorithm_bzip2.c)
+  target_link_libraries(zip PRIVATE BZip2::BZip2)
+endif()
+
+if(HAVE_LIBLZMA)
+  target_sources(zip PRIVATE zip_algorithm_xz.c)
+  target_link_libraries(zip PRIVATE LibLZMA::LibLZMA)
+endif()
+
+if(HAVE_LIBZSTD)
+  target_sources(zip PRIVATE zip_algorithm_zstd.c)
+  target_link_libraries(zip PRIVATE Zstd::Zstd)
+endif()
+
+if(HAVE_COMMONCRYPTO)
+  target_sources(zip PRIVATE zip_crypto_commoncrypto.c)
+elseif(HAVE_WINDOWS_CRYPTO)
+  target_sources(zip PRIVATE zip_crypto_win.c)
+  target_link_libraries(zip PRIVATE bcrypt)
+elseif(HAVE_GNUTLS)
+  target_sources(zip PRIVATE zip_crypto_gnutls.c)
+  target_link_libraries(zip PRIVATE GnuTLS::GnuTLS Nettle::Nettle)
+elseif(HAVE_OPENSSL)
+  target_sources(zip PRIVATE zip_crypto_openssl.c)
+  target_link_libraries(zip PRIVATE OpenSSL::Crypto)
+elseif(HAVE_MBEDTLS)
+  target_sources(zip PRIVATE zip_crypto_mbedtls.c)
+  target_link_libraries(zip PRIVATE MbedTLS::MbedTLS)
+endif()
+
+if(HAVE_CRYPTO)
+  target_sources(zip PRIVATE zip_winzip_aes.c zip_source_winzip_aes_decode.c zip_source_winzip_aes_encode.c)
+endif()
+
+if(SHARED_LIB_VERSIONNING)
+  set_target_properties(zip PROPERTIES VERSION 5.4 SOVERSION 5)
+endif()
+
+target_link_libraries(zip PRIVATE ZLIB::ZLIB)
+target_include_directories(zip
+  PUBLIC
+  $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/lib>
+  $<BUILD_INTERFACE:${PROJECT_BINARY_DIR}>
+  $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
   )
-ENDIF(WIN32)
 
-INCLUDE_DIRECTORIES(BEFORE ${PROJECT_SOURCE_DIR}/lib ${PROJECT_BINARY_DIR})
-
-file(READ ${PROJECT_SOURCE_DIR}/lib/zip.h zip_h)
-string(REGEX MATCHALL "#define ZIP_ER_([A-Z_]+) ([0-9]+)[ \t]+/([-*0-9a-zA-Z ']*)/" zip_h_err ${zip_h})
-set(zip_err_str [=[
-/*
-   This file was generated automatically by CMake
-   from zip.h\; make changes there.
- */
-
-#include "zipint.h"
-
-const char * const _zip_err_str[] = {
-]=])
-set(zip_err_type)
-foreach(errln ${zip_h_err})
-  string(REGEX MATCH "#define ZIP_ER_([A-Z_]+) ([0-9]+)[ \t]+/([-*0-9a-zA-Z ']*)/" err_t_tt ${errln})
-  string(REGEX MATCH "([N|S|Z]+) ([-0-9a-zA-Z ']*)" err_t_tt "${CMAKE_MATCH_3}")
-  string(APPEND zip_err_type "    ${CMAKE_MATCH_1},\n")
-  string(STRIP "${CMAKE_MATCH_2}" err_t_tt)
-  string(APPEND zip_err_str "    \"${err_t_tt}\",\n")
-endforeach()
-string(APPEND zip_err_str [=[}\;
-
-const int _zip_nerr_str = sizeof(_zip_err_str)/sizeof(_zip_err_str[0])\;
-
-#define N ZIP_ET_NONE
-#define S ZIP_ET_SYS
-#define Z ZIP_ET_ZLIB
-
-const int _zip_err_type[] = {
-]=])
-string(APPEND zip_err_str "${zip_err_type}}\;\n")
-file(WRITE ${CMAKE_BINARY_DIR}/zip_err_str.c ${zip_err_str})
-list(APPEND LIBZIP_SOURCES ${CMAKE_BINARY_DIR}/zip_err_str.c)
-
-IF(HAVE_LIBBZ2)
-  SET(LIBZIP_OPTIONAL_FILES zip_algorithm_bzip2.c)
-ENDIF()
-
-IF(HAVE_LIBLZMA)
-  add_compile_definitions(LZMA_API_STATIC)
-  SET(LIBZIP_OPTIONAL_FILES ${LIBZIP_OPTIONAL_FILES} zip_algorithm_xz.c)
-ENDIF()
-
-IF(HAVE_COMMONCRYPTO)
-  SET(LIBZIP_OPTIONAL_FILES ${LIBZIP_OPTIONAL_FILES} zip_crypto_commoncrypto.c
-)
-ELSEIF(HAVE_WINDOWS_CRYPTO)
-  SET(LIBZIP_OPTIONAL_FILES ${LIBZIP_OPTIONAL_FILES} zip_crypto_win.c
-)
-ELSEIF(HAVE_GNUTLS)
-  SET(LIBZIP_OPTIONAL_FILES ${LIBZIP_OPTIONAL_FILES} zip_crypto_gnutls.c
-)
-ELSEIF(HAVE_OPENSSL)
-  SET(LIBZIP_OPTIONAL_FILES ${LIBZIP_OPTIONAL_FILES} zip_crypto_openssl.c
-)
-ELSEIF(HAVE_MBEDTLS)
-  SET(LIBZIP_OPTIONAL_FILES ${LIBZIP_OPTIONAL_FILES} zip_crypto_mbedtls.c
-)
-ENDIF()
-
-IF(HAVE_CRYPTO)
-  SET(LIBZIP_OPTIONAL_FILES ${LIBZIP_OPTIONAL_FILES} zip_winzip_aes.c zip_source_winzip_aes_decode.c zip_source_winzip_aes_encode.c
-)
-ENDIF()
-
-SET(CMAKE_DEBUG_POSTFIX _debug)
-
-ADD_LIBRARY(libzip_a STATIC ${LIBZIP_SOURCES} ${LIBZIP_EXTRA_FILES} ${LIBZIP_OPTIONAL_FILES} ${LIBZIP_OPSYS_FILES})
-SET_TARGET_PROPERTIES(libzip_a PROPERTIES VERSION 5.3 SOVERSION 5 COMPILE_PDB_NAME_DEBUG libzip_a_debug)
-TARGET_LINK_LIBRARIES(libzip_a ${ZLIB_LIBRARY} ${OPTIONAL_LIBRARY})
-
-IF(LIBZIP_DO_INSTALL)
-  INSTALL(TARGETS libzip_a
+if(LIBZIP_DO_INSTALL)
+  install(TARGETS zip
     EXPORT ${PROJECT_NAME}-targets
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
     ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
     INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR})
-ENDIF()
+  install(FILES zip.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
+endif()
+
+# create zip_err_str.h from zip.h
+file(READ ${PROJECT_SOURCE_DIR}/lib/zip.h zip_h)
+string(REGEX MATCHALL "#define ZIP_ER_([A-Z0-9_]+) ([0-9]+)[ \t]+/([-*0-9a-zA-Z, ']*)/" zip_h_err ${zip_h})
+file(READ ${PROJECT_SOURCE_DIR}/lib/zipint.h zipint_h)
+string(REGEX MATCHALL "#define ZIP_ER_DETAIL_([A-Z0-9_]+) ([0-9]+)[ \t]+/([-*0-9a-zA-Z, ']*)/" zipint_h_err ${zipint_h})
+set(zip_err_str [=[
+/*
+  This file was generated automatically by CMake
+  from zip.h and zipint.h\; make changes there.
+*/
+
+#include "zipint.h"
+
+#define L ZIP_ET_LIBZIP
+#define N ZIP_ET_NONE
+#define S ZIP_ET_SYS
+#define Z ZIP_ET_ZLIB
+
+#define E ZIP_DETAIL_ET_ENTRY
+#define G ZIP_DETAIL_ET_GLOBAL
+
+const struct _zip_err_info _zip_err_str[] = {
+]=])
+set(zip_err_type)
+foreach(errln ${zip_h_err})
+  string(REGEX MATCH "#define ZIP_ER_([A-Z0-9_]+) ([0-9]+)[ \t]+/([-*0-9a-zA-Z, ']*)/" err_t_tt ${errln})
+  string(REGEX MATCH "([L|N|S|Z]+) ([-0-9a-zA-Z,, ']*)" err_t_tt "${CMAKE_MATCH_3}")
+  string(STRIP "${CMAKE_MATCH_2}" err_t_tt)
+  string(APPEND zip_err_str "    { ${CMAKE_MATCH_1}, \"${err_t_tt}\" },\n")
+endforeach()
+string(APPEND zip_err_str [=[}\;
+
+const int _zip_err_str_count = sizeof(_zip_err_str)/sizeof(_zip_err_str[0])\;
+
+const struct _zip_err_info _zip_err_details[] = {
+]=])
+foreach(errln ${zipint_h_err})
+  string(REGEX MATCH "#define ZIP_ER_DETAIL_([A-Z0-9_]+) ([0-9]+)[ \t]+/([-*0-9a-zA-Z, ']*)/" err_t_tt ${errln})
+  string(REGEX MATCH "([E|G]+) ([-0-9a-zA-Z, ']*)" err_t_tt "${CMAKE_MATCH_3}")
+  string(STRIP "${CMAKE_MATCH_2}" err_t_tt)
+  string(APPEND zip_err_str "    { ${CMAKE_MATCH_1}, \"${err_t_tt}\" },\n")
+endforeach()
+string(APPEND zip_err_str [=[}\;
+
+const int _zip_err_details_count = sizeof(_zip_err_details)/sizeof(_zip_err_details[0])\;
+]=])
+file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/zip_err_str.c ${zip_err_str})
