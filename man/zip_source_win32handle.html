@@ -2,10 +2,10 @@
 <html>
 <!-- This is an automatically generated file.  Do not edit.
    zip_source_handle.mdoc -- create data source from a Windows file handle
-   Copyright (C) 2015-2019 Dieter Baron and Thomas Klausner
+   Copyright (C) 2015-2021 Dieter Baron and Thomas Klausner
   
    This file is part of libzip, a library to manipulate ZIP archives.
-   The authors can be contacted at <libzip@nih.at>
+   The authors can be contacted at <info@libzip.org>
   
    Redistribution and use in source and binary forms, with or without
    modification, are permitted provided that the following conditions
@@ -77,10 +77,9 @@ libzip (-lzip)
 <h1 class="Sh" id="DESCRIPTION"><a class="permalink" href="#DESCRIPTION">DESCRIPTION</a></h1>
 The functions <code class="Fn">zip_source_win32handle</code>() and
   <code class="Fn">zip_source_win32handle_create</code>() create a zip source
-  from a Windows file handle. They open <var class="Ar">fname</var> and read
-  <var class="Ar">len</var> bytes from offset <var class="Ar">start</var> from
-  it. If <var class="Ar">len</var> is 0 or -1, the whole file (starting from
-  <var class="Ar">start</var>) is used.
+  from a Windows file handle. They read <var class="Ar">len</var> bytes from
+  offset <var class="Ar">start</var> from it. If <var class="Ar">len</var> is 0
+  or -1, the whole file (starting from <var class="Ar">start</var>) is used.
 <p class="Pp">If the file supports seek, the source can be used to open a zip
     archive from.</p>
 <p class="Pp">The file is opened and read when the data from the source is used,
@@ -101,12 +100,10 @@ Upon successful completion, the created source is returned. Otherwise,
   <code class="Fn">zip_source_w32handle_create</code>() fail if:
 <dl class="Bl-tag">
   <dt>[<a class="permalink" href="#ZIP_ER_INVAL"><code class="Er" id="ZIP_ER_INVAL">ZIP_ER_INVAL</code></a>]</dt>
-  <dd><var class="Ar">fname</var>, <var class="Ar">start</var>, or
+  <dd><var class="Ar">h</var>, <var class="Ar">start</var>, or
       <var class="Ar">len</var> are invalid.</dd>
   <dt>[<a class="permalink" href="#ZIP_ER_MEMORY"><code class="Er" id="ZIP_ER_MEMORY">ZIP_ER_MEMORY</code></a>]</dt>
   <dd>Required memory could not be allocated.</dd>
-  <dt>[<a class="permalink" href="#ZIP_ER_OPEN"><code class="Er" id="ZIP_ER_OPEN">ZIP_ER_OPEN</code></a>]</dt>
-  <dd>Opening <var class="Ar">fname</var> failed.</dd>
 </dl>
 </section>
 <section class="Sh">
@@ -130,13 +127,13 @@ Upon successful completion, the created source is returned. Otherwise,
 <span class="An">Dieter Baron</span>
   &lt;<a class="Mt" href="mailto:dillo@nih.at">dillo@nih.at</a>&gt; and
   <span class="An">Thomas Klausner</span>
-  &lt;<a class="Mt" href="mailto:tk@giga.or.at">tk@giga.or.at</a>&gt;
+  &lt;<a class="Mt" href="mailto:wiz@gatalith.at">wiz@gatalith.at</a>&gt;
 </section>
 </div>
 <table class="foot">
   <tr>
-    <td class="foot-date">December 18, 2017</td>
-    <td class="foot-os">NetBSD 9.99.63</td>
+    <td class="foot-date">May 14, 2024</td>
+    <td class="foot-os">NiH</td>
   </tr>
 </table>
 </body>
