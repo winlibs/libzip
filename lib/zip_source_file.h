@@ -1,9 +1,12 @@
+#ifndef _HAD_ZIP_SOURCE_FILE_H
+#define _HAD_ZIP_SOURCE_FILE_H
+
 /*
   zip_source_file.h -- header for common file operations
-  Copyright (C) 2020 Dieter Baron and Thomas Klausner
+  Copyright (C) 2020-2024 Dieter Baron and Thomas Klausner
 
   This file is part of libzip, a library to manipulate ZIP archives.
-  The authors can be contacted at <libzip@nih.at>
+  The authors can be contacted at <info@libzip.org>
 
   Redistribution and use in source and binary forms, with or without
   modification, are permitted provided that the following conditions
@@ -34,7 +37,7 @@
 struct zip_source_file_stat {
     zip_uint64_t size; /* must be valid for regular files */
     time_t mtime;      /* must always be valid, is initialized to current time */
-    bool exists;       /* must always be vaild */
+    bool exists;       /* must always be valid */
     bool regular_file; /* must always be valid */
 };
 
@@ -88,3 +91,5 @@ struct zip_source_file_operations {
 };
 
 zip_source_t *zip_source_file_common_new(const char *fname, void *file, zip_uint64_t start, zip_int64_t len, const zip_stat_t *st, zip_source_file_operations_t *ops, void *ops_userdata, zip_error_t *error);
+
+#endif /* _HAD_ZIP_SOURCE_FILE_H */

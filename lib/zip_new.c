@@ -1,9 +1,9 @@
 /*
   zip_new.c -- create and init struct zip
-  Copyright (C) 1999-2019 Dieter Baron and Thomas Klausner
+  Copyright (C) 1999-2024 Dieter Baron and Thomas Klausner
 
   This file is part of libzip, a library to manipulate ZIP archives.
-  The authors can be contacted at <libzip@nih.at>
+  The authors can be contacted at <info@libzip.org>
 
   Redistribution and use in source and binary forms, with or without
   modification, are permitted provided that the following conditions
@@ -46,14 +46,14 @@ _zip_new(zip_error_t *error) {
     zip_t *za;
 
     za = (zip_t *)malloc(sizeof(struct zip));
-    if (!za) {
-	zip_error_set(error, ZIP_ER_MEMORY, 0);
-	return NULL;
+    if (za == NULL) {
+        zip_error_set(error, ZIP_ER_MEMORY, 0);
+        return NULL;
     }
 
     if ((za->names = _zip_hash_new(error)) == NULL) {
-	free(za);
-	return NULL;
+        free(za);
+        return NULL;
     }
 
     za->src = NULL;
