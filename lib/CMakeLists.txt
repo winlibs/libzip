@@ -2,7 +2,7 @@ include(CheckFunctionExists)
 
 set(CMAKE_C_VISIBILITY_PRESET hidden)
 
-add_library(zip STATIC
+add_library(zip
   zip_add.c
   zip_add_dir.c
   zip_add_entry.c
@@ -144,7 +144,6 @@ if(HAVE_LIBBZ2)
 endif()
 
 if(HAVE_LIBLZMA)
-  add_compile_definitions(LZMA_API_STATIC)
   target_sources(zip PRIVATE zip_algorithm_xz.c)
   target_link_libraries(zip PRIVATE LibLZMA::LibLZMA)
 endif()
@@ -178,8 +177,6 @@ if(SHARED_LIB_VERSIONNING)
   # MACHO_*_VERSION can be removed when SOVERSION gets increased. Cf #405
   set_target_properties(zip PROPERTIES VERSION 5.5 SOVERSION 5 MACHO_CURRENT_VERSION 6.5 MACHO_COMPATIBILITY_VERSION 6)
 endif()
-set_target_properties(zip PROPERTIES OUTPUT_NAME libzip_a)
-set(CMAKE_DEBUG_POSTFIX _debug)
 
 target_link_libraries(zip PRIVATE ZLIB::ZLIB)
 target_include_directories(zip

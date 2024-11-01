@@ -6,7 +6,7 @@ if (${CMAKE_VERSION} VERSION_LESS "3.17.0")
 endif()
 
 project(libzip
-  VERSION 1.11.1
+  VERSION 1.11.2
   LANGUAGES C)
 
 if(NOT libzip_VERSION_PATCH)
@@ -101,7 +101,10 @@ check_function_exists(_close HAVE__CLOSE)
 check_function_exists(_dup HAVE__DUP)
 check_function_exists(_fdopen HAVE__FDOPEN)
 check_function_exists(_fileno HAVE__FILENO)
+check_function_exists(_fseeki64 HAVE__FSEEKI64)
+check_function_exists(_fstat64 HAVE__FSTAT64)
 check_function_exists(_setmode HAVE__SETMODE)
+check_function_exists(_stat64 HAVE__STAT64)
 check_symbol_exists(_snprintf stdio.h HAVE__SNPRINTF)
 check_symbol_exists(_snprintf_s stdio.h HAVE__SNPRINTF_S)
 check_symbol_exists(_snwprintf_s stdio.h HAVE__SNWPRINTF_S)
@@ -244,7 +247,7 @@ if(ENABLE_LZMA)
 endif(ENABLE_LZMA)
 
 if(ENABLE_ZSTD)
-  find_package(zstd 1.3.6)
+  find_package(zstd 1.4.0)
   if(zstd_FOUND)
     set(HAVE_LIBZSTD 1)
     if(TARGET zstd::libzstd_shared AND BUILD_SHARED_LIBS)
@@ -281,9 +284,6 @@ endif()
 if(MSVC)
   add_compile_definitions(_CRT_SECURE_NO_WARNINGS)
   add_compile_definitions(_CRT_NONSTDC_NO_DEPRECATE)
-  if(CMAKE_SIZEOF_VOID_P EQUAL 4)
-    add_definitions("-D_USE_32BIT_TIME_T=1")
-  endif(CMAKE_SIZEOF_VOID_P EQUAL 4)
 endif(MSVC)
 
 if(WIN32)
@@ -466,8 +466,8 @@ else()
 endif()
 
 # write out config file
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cmake-config.h.in ${PROJECT_BINARY_DIR}/config.h)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cmake-zipconf.h.in ${PROJECT_BINARY_DIR}/zipconf.h)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/config.h.in ${PROJECT_BINARY_DIR}/config.h)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/zipconf.h.in ${PROJECT_BINARY_DIR}/zipconf.h)
 
 # for tests
 
@@ -480,19 +480,19 @@ include(CMakePackageConfigHelpers)
 write_basic_package_version_file("${PROJECT_BINARY_DIR}/${PROJECT_NAME}-config-version.cmake"
   COMPATIBILITY AnyNewerVersion)
 
-configure_package_config_file("${PROJECT_NAME}-config.cmake.in" "${PROJECT_BINARY_DIR}/${PROJECT_NAME}-config.cmake"
-  INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/libzip)
+if(LIBZIP_DO_INSTALL)
+  configure_package_config_file("${PROJECT_NAME}-config.cmake.in" "${PROJECT_BINARY_DIR}/${PROJECT_NAME}-config.cmake"
+    INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/libzip)
 
-# Install Find* modules, they are required by libzip-config.cmake to resolve dependencies
-install(FILES
+  # Install Find* modules, they are required by libzip-config.cmake to resolve dependencies
+  install(FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/cmake/FindNettle.cmake
     ${CMAKE_CURRENT_SOURCE_DIR}/cmake/Findzstd.cmake
     ${CMAKE_CURRENT_SOURCE_DIR}/cmake/FindMbedTLS.cmake
-  DESTINATION
+    DESTINATION
     ${CMAKE_INSTALL_LIBDIR}/cmake/libzip/modules
-  )  
+  )
 
-if(LIBZIP_DO_INSTALL)
   # Add targets to the build-tree export set
   export(TARGETS zip
     FILE "${PROJECT_BINARY_DIR}/${PROJECT_NAME}-targets.cmake")
