@@ -1,3 +1,15 @@
+# 1.11.4 [2025-05-23]
+
+* Use separate cmake package files for library and programs.
+* Improve documentation.
+
+# 1.11.3 [2025-01-20]
+
+* Report read error for corrupted encrypted file data.
+* Avoid unnecessary seeks when writing archive.
+* Don't hardcode `_Nullable` support in `zip.h` to allow it to be used with different compilers.
+* Improve check for GetSecurityInformation availability on Windows.
+
 # 1.11.2 [2024-10-31]
 
 * Fix performance regression in `zip_stat` introduced in 1.11.
