@@ -31,13 +31,13 @@
   IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+#include "zip.h"
 #include "zipint.h"
 #include <stdlib.h>
 #include <string.h>
 
-/* parameter for the string hash function */
-#define HASH_MULTIPLIER 33
-#define HASH_START 5381
+#include "siphash.h"
+
 
 /* hash table's fill ratio is kept between these by doubling/halfing its size as necessary */
 #define HASH_MAX_FILL .75
@@ -52,7 +52,7 @@ struct zip_hash_entry {
     zip_int64_t orig_index;
     zip_int64_t current_index;
     struct zip_hash_entry *next;
-    zip_uint32_t hash_value;
+    zip_uint64_t hash_value;
 };
 typedef struct zip_hash_entry zip_hash_entry_t;
 
@@ -60,6 +60,7 @@ struct zip_hash {
     zip_uint32_t table_size;
     zip_uint64_t nentries;
     zip_hash_entry_t **table;
+    zip_uint8_t hash_key[16];
 };
 
 
@@ -71,24 +72,6 @@ free_list(zip_hash_entry_t *entry) {
         free(entry);
         entry = next;
     }
-}
-
-
-/* compute hash of string, full 32 bit value */
-static zip_uint32_t
-hash_string(const zip_uint8_t *name) {
-    zip_uint64_t value = HASH_START;
-
-    if (name == NULL) {
-        return 0;
-    }
-
-    while (*name != 0) {
-        value = (zip_uint64_t)(((value * HASH_MULTIPLIER) + (zip_uint8_t)*name) % 0x100000000ul);
-        name++;
-    }
-
-    return (zip_uint32_t)value;
 }
 
 
@@ -175,6 +158,11 @@ _zip_hash_new(zip_error_t *error) {
     hash->table_size = 0;
     hash->nentries = 0;
     hash->table = NULL;
+    if (!zip_secure_random(hash->hash_key, sizeof(hash->hash_key))) {
+        free(hash);
+        zip_error_set(error, ZIP_ER_INTERNAL, 0);
+        return NULL;
+    }
 
     return hash;
 }
@@ -196,6 +184,7 @@ _zip_hash_free(zip_hash_t *hash) {
         }
         free(hash->table);
     }
+    /* The hash key does not need to be securely erased. */
     free(hash);
 }
 
@@ -203,7 +192,8 @@ _zip_hash_free(zip_hash_t *hash) {
 /* insert into hash, return error on existence or memory issues */
 bool
 _zip_hash_add(zip_hash_t *hash, const zip_uint8_t *name, zip_uint64_t index, zip_flags_t flags, zip_error_t *error) {
-    zip_uint32_t hash_value, table_index;
+    zip_uint64_t hash_value;
+    zip_uint32_t table_index;
     zip_hash_entry_t *entry;
 
     if (hash == NULL || name == NULL || index > ZIP_INT64_MAX) {
@@ -217,7 +207,7 @@ _zip_hash_add(zip_hash_t *hash, const zip_uint8_t *name, zip_uint64_t index, zip
         }
     }
 
-    hash_value = hash_string(name);
+    hash_value = siphash(name, hash->hash_key);
     table_index = hash_value % hash->table_size;
 
     for (entry = hash->table[table_index]; entry != NULL; entry = entry->next) {
@@ -262,7 +252,8 @@ _zip_hash_add(zip_hash_t *hash, const zip_uint8_t *name, zip_uint64_t index, zip
 /* remove entry from hash, error if not found */
 bool
 _zip_hash_delete(zip_hash_t *hash, const zip_uint8_t *name, zip_error_t *error) {
-    zip_uint32_t hash_value, index;
+    zip_uint64_t hash_value;
+    zip_uint32_t index;
     zip_hash_entry_t *entry, *previous;
 
     if (hash == NULL || name == NULL) {
@@ -271,7 +262,7 @@ _zip_hash_delete(zip_hash_t *hash, const zip_uint8_t *name, zip_error_t *error) 
     }
 
     if (hash->nentries > 0) {
-        hash_value = hash_string(name);
+        hash_value = siphash(name, hash->hash_key);
         index = hash_value % hash->table_size;
         previous = NULL;
         entry = hash->table[index];
@@ -310,7 +301,8 @@ _zip_hash_delete(zip_hash_t *hash, const zip_uint8_t *name, zip_error_t *error) 
 /* find value for entry in hash, -1 if not found */
 zip_int64_t
 _zip_hash_lookup(zip_hash_t *hash, const zip_uint8_t *name, zip_flags_t flags, zip_error_t *error) {
-    zip_uint32_t hash_value, index;
+    zip_uint64_t hash_value;
+    zip_uint32_t index;
     zip_hash_entry_t *entry;
 
     if (hash == NULL || name == NULL) {
@@ -319,7 +311,7 @@ _zip_hash_lookup(zip_hash_t *hash, const zip_uint8_t *name, zip_flags_t flags, z
     }
 
     if (hash->nentries > 0) {
-        hash_value = hash_string(name);
+        hash_value = siphash(name, hash->hash_key);
         index = hash_value % hash->table_size;
         for (entry = hash->table[index]; entry != NULL; entry = entry->next) {
             if (strcmp((const char *)name, (const char *)entry->name) == 0) {
