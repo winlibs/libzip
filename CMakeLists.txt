@@ -6,7 +6,7 @@ if (${CMAKE_VERSION} VERSION_LESS "3.17.0")
 endif()
 
 project(libzip
-  VERSION 1.12
+  VERSION 1.12.1
   LANGUAGES C)
 
 if(NOT libzip_VERSION_PATCH)
@@ -293,9 +293,6 @@ endif()
 if(MSVC)
   add_compile_definitions(_CRT_SECURE_NO_WARNINGS)
   add_compile_definitions(_CRT_NONSTDC_NO_DEPRECATE)
-  if(CMAKE_SIZEOF_VOID_P EQUAL 4)
-    add_definitions("-D_USE_32BIT_TIME_T=1")
-  endif(CMAKE_SIZEOF_VOID_P EQUAL 4)
 endif(MSVC)
 
 if(WIN32)
